@@ -1330,3 +1330,59 @@ button { cursor: pointer; font: inherit; border: none; background: none; }
   color: #fff;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL SVG SIZING & RESPONSIVE FIXES
+   ═══════════════════════════════════════════════════════════ */
+svg {
+  max-width: 100%;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.product-card__whatsapp svg {
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+  max-width: 14px !important;
+  max-height: 14px !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+  fill: currentColor !important;
+}
+
+.product-card__action-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+}
+
+.nav__cta svg {
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+}
+
+.whatsapp-float svg {
+  width: 30px !important;
+  height: 30px !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+  fill: #fff !important;
+}
+
+.scroll-top svg {
+  width: 20px !important;
+  height: 20px !important;
+  flex-shrink: 0 !important;
+}
+
+.modal__wa-btn svg {
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0 !important;
+  fill: currentColor !important;
+}
+
