@@ -194,7 +194,8 @@ function renderProductsGrid() {
 // CREATE PRODUCT CARD HTML
 function createProductCard(product, index) {
   const card = document.createElement("div");
-  card.className = "product-card";
+  card.className = "product-card show";
+  card.setAttribute("data-category", product.sector);
   card.style.animationDelay = `${index * 0.05}s`;
 
   let badgeLabel = "";
