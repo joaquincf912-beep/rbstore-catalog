@@ -5,7 +5,7 @@
 const RBSTORE_CONFIG = {
   whatsappNumber: "584120500675",
   adminKey: "2828",
-  storageKey: "rbstore_catalog_v10"
+  storageKey: "rbstore_catalog_v11"
 };
 
 // INITIAL SHOWCASE CATALOG (In exact order specified by user)
@@ -29,16 +29,6 @@ const DEFAULT_PRODUCTS = [
     badge: "nuevo",
     image: "images/panel_led_rgb.jpg",
     description: "Panel de luz LED RGB de bolsillo (AY-83). Efectos multicolor, rotación 150° y rosca 1/4 para trípode o cámara."
-  },
-  {
-    id: "rb3",
-    name: "Panel led RGB Pro",
-    sector: "iluminacion",
-    price: 15.00,
-    oldPrice: 20.00,
-    badge: "popular",
-    image: "images/panel_led_rgb.jpg",
-    description: "Panel LED RGB profesional con control de brillo y temperatura de color (2500K-9000K) para streaming y videos."
   },
   {
     id: "rb4",
