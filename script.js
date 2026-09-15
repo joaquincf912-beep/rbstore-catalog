@@ -5,7 +5,7 @@
 const RBSTORE_CONFIG = {
   whatsappNumber: "584120500675",
   adminKey: "2828",
-  storageKey: "rbstore_custom_products_v3"
+  storageKey: "rbstore_catalog_v10"
 };
 
 // INITIAL SHOWCASE CATALOG (In exact order specified by user)
@@ -144,15 +144,30 @@ function initApp() {
 
 // LOAD CATALOG DATA FROM STORAGE OR DEFAULTS
 function loadCatalogData() {
+  try {
+    localStorage.removeItem("rbstore_custom_products");
+    localStorage.removeItem("rbstore_custom_products_v2");
+    localStorage.removeItem("rbstore_custom_products_v3");
+  } catch(e) {}
+
   const savedData = localStorage.getItem(RBSTORE_CONFIG.storageKey);
   if (savedData) {
     try {
-      products = JSON.parse(savedData);
+      const parsed = JSON.parse(savedData);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        products = parsed;
+      } else {
+        products = [...DEFAULT_PRODUCTS];
+      }
     } catch (e) {
       console.error("Error parsing saved catalog data", e);
       products = [...DEFAULT_PRODUCTS];
     }
   } else {
+    products = [...DEFAULT_PRODUCTS];
+  }
+
+  if (!products || products.length === 0) {
     products = [...DEFAULT_PRODUCTS];
   }
 }
