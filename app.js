@@ -275,18 +275,17 @@ function setupEventListeners() {
     });
   }
 
-  // Sector Cards Filter
-  const sectorCards = document.querySelectorAll(".sector-card");
-  sectorCards.forEach(card => {
+  // Category / Sector Cards Filter
+  const categoryCards = document.querySelectorAll(".cat-card, .sector-card");
+  categoryCards.forEach(card => {
     card.addEventListener("click", () => {
-      sectorCards.forEach(c => c.classList.remove("active"));
+      categoryCards.forEach(c => c.classList.remove("active"));
       card.classList.add("active");
       
-      currentFilterSector = card.getAttribute("data-sector");
-      updateFilterStatusBar();
+      currentFilterSector = card.getAttribute("data-category") || card.getAttribute("data-sector") || "todos";
       renderProductsGrid();
 
-      const prodSection = document.getElementById("productos");
+      const prodSection = document.getElementById("catalogo") || document.getElementById("productos");
       if (prodSection) prodSection.scrollIntoView({ behavior: "smooth" });
     });
   });

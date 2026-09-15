@@ -99,31 +99,26 @@
         <div class="cat-card active" data-category="todos">
           <div class="cat-card__icon">🛒</div>
           <div class="cat-card__name">Todos</div>
-          <div class="cat-card__count">9 productos</div>
+          <div class="cat-card__count">11 productos</div>
         </div>
-        <div class="cat-card" data-category="audio">
-          <div class="cat-card__icon">🎧</div>
-          <div class="cat-card__name">Audio</div>
-          <div class="cat-card__count">3 productos</div>
-        </div>
-        <div class="cat-card" data-category="smartphones">
-          <div class="cat-card__icon">📱</div>
-          <div class="cat-card__name">Smartphones</div>
-          <div class="cat-card__count">1 producto</div>
-        </div>
-        <div class="cat-card" data-category="wearables">
-          <div class="cat-card__icon">⌚</div>
-          <div class="cat-card__name">Wearables</div>
-          <div class="cat-card__count">1 producto</div>
-        </div>
-        <div class="cat-card" data-category="accesorios">
+        <div class="cat-card" data-category="cargadores">
           <div class="cat-card__icon">🔌</div>
-          <div class="cat-card__name">Accesorios</div>
+          <div class="cat-card__name">Cargadores & Cables</div>
+          <div class="cat-card__count">5 productos</div>
+        </div>
+        <div class="cat-card" data-category="iluminacion">
+          <div class="cat-card__icon">💡</div>
+          <div class="cat-card__name">Iluminación LED</div>
           <div class="cat-card__count">3 productos</div>
         </div>
-        <div class="cat-card" data-category="gaming">
-          <div class="cat-card__icon">🎮</div>
-          <div class="cat-card__name">Gaming</div>
+        <div class="cat-card" data-category="audifonos">
+          <div class="cat-card__icon">🎧</div>
+          <div class="cat-card__name">Audífonos</div>
+          <div class="cat-card__count">2 productos</div>
+        </div>
+        <div class="cat-card" data-category="varios">
+          <div class="cat-card__icon">🏈</div>
+          <div class="cat-card__name">Artículos Varios</div>
           <div class="cat-card__count">1 producto</div>
         </div>
       </div>
@@ -135,6 +130,15 @@
     <div class="container">
       <h2 class="section-title reveal">Nuestro Catálogo</h2>
       <p class="section-subtitle reveal">Los mejores artículos tecnológicos con garantía y calidad</p>
+
+      <!-- Search Bar -->
+      <div class="search-bar-container reveal">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="searchInput" placeholder="Buscar producto en RBstore (ej: AirPods, cargador, LED...)" aria-label="Buscar producto">
+          <button id="clearSearchBtn" class="clear-search-btn" style="display: none;" title="Limpiar búsqueda">&times;</button>
+        </div>
+      </div>
 
       <div class="products__grid" id="productsGrid">
 
