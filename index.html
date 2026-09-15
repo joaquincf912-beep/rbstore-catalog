@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RBstore — Catálogo Digital de Tecnología</title>
+  <meta name="description" content="Catálogo digital de artículos tecnológicos en RBstore. Audífonos, smartphones, smartwatches, parlantes y más. Centro Comercial Central, Local 10.">
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Background Glow FX -->
+  <div class="glow-orb glow-orb--blue"></div>
+  <div class="glow-orb glow-orb--navy"></div>
+  <div class="glow-orb glow-orb--purple"></div>
+
+  <!-- ═══════════ HEADER ═══════════ -->
+  <header class="header" id="header">
+    <div class="container">
+      <a href="#" class="header__logo">
+        <img src="assets/logo.png" alt="RBstore Logo">
+        <span>RB<span class="accent-text">store</span></span>
+      </a>
+
+      <nav>
+        <ul class="nav__links" id="navLinks">
+          <li><a href="#inicio">Inicio</a></li>
+          <li><a href="#catalogo">Catálogo</a></li>
+          <li><a href="#nosotros">Nosotros</a></li>
+          <li><a href="#contacto">Contacto</a></li>
+        </ul>
+      </nav>
+
+      <a href="https://wa.me/584120500675?text=Hola%20RBstore!%20Me%20interesa%20un%20producto" target="_blank" class="nav__cta" id="navCta">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp
+      </a>
+
+      <button class="nav__toggle" id="navToggle" aria-label="Menú">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════════ HERO ═══════════ -->
+  <section class="hero" id="inicio">
+    <div class="hero__bg-grid"></div>
+    <div class="hero__content">
+      <div class="hero__badge">
+        <span class="pulse"></span>
+        Catálogo Digital 2025
+      </div>
+
+      <h1 class="hero__title">
+        Tu tienda de <span class="accent-text">tecnología</span> de confianza
+      </h1>
+
+      <p class="hero__desc">
+        Descubre nuestra selección de productos tecnológicos de alta calidad. 
+        Audífonos, smartphones, smartwatches, parlantes y mucho más.
+      </p>
+
+      <div class="hero__actions">
+        <a href="#catalogo" class="btn btn--primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          Ver Catálogo
+        </a>
+        <a href="https://wa.me/584120500675?text=Hola%20RBstore!%20Quiero%20información" target="_blank" class="btn btn--outline">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Contáctanos
+        </a>
+      </div>
+
+      <div class="hero__stats">
+        <div>
+          <div class="hero__stat-num" data-count="500">0</div>
+          <div class="hero__stat-label">Productos</div>
+        </div>
+        <div>
+          <div class="hero__stat-num" data-count="1200">0</div>
+          <div class="hero__stat-label">Clientes</div>
+        </div>
+        <div>
+          <div class="hero__stat-num" data-count="50">0</div>
+          <div class="hero__stat-label">Marcas</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ CATEGORIES ═══════════ -->
+  <section class="categories" id="categorias">
+    <div class="container">
+      <h2 class="section-title reveal">Categorías</h2>
+      <p class="section-subtitle reveal">Explora nuestros productos por categoría</p>
+
+      <div class="categories__grid reveal">
+        <div class="cat-card active" data-category="todos">
+          <div class="cat-card__icon">🛒</div>
+          <div class="cat-card__name">Todos</div>
+          <div class="cat-card__count">9 productos</div>
+        </div>
+        <div class="cat-card" data-category="audio">
+          <div class="cat-card__icon">🎧</div>
+          <div class="cat-card__name">Audio</div>
+          <div class="cat-card__count">3 productos</div>
+        </div>
+        <div class="cat-card" data-category="smartphones">
+          <div class="cat-card__icon">📱</div>
+          <div class="cat-card__name">Smartphones</div>
+          <div class="cat-card__count">1 producto</div>
+        </div>
+        <div class="cat-card" data-category="wearables">
+          <div class="cat-card__icon">⌚</div>
+          <div class="cat-card__name">Wearables</div>
+          <div class="cat-card__count">1 producto</div>
+        </div>
+        <div class="cat-card" data-category="accesorios">
+          <div class="cat-card__icon">🔌</div>
+          <div class="cat-card__name">Accesorios</div>
+          <div class="cat-card__count">3 productos</div>
+        </div>
+        <div class="cat-card" data-category="gaming">
+          <div class="cat-card__icon">🎮</div>
+          <div class="cat-card__name">Gaming</div>
+          <div class="cat-card__count">1 producto</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ PRODUCTS ═══════════ -->
+  <section class="products" id="catalogo">
+    <div class="container">
+      <h2 class="section-title reveal">Nuestro Catálogo</h2>
+      <p class="section-subtitle reveal">Los mejores artículos tecnológicos con garantía y calidad</p>
+
+      <div class="products__grid" id="productsGrid">
+
+        <!-- Product 1: Cargador de 20w -->
+        <div class="product-card show reveal" data-category="accesorios">
+          <span class="product-card__badge product-card__badge--hot">Popular</span>
+          <div class="product-card__img">
+            <img src="images/cargador_20w.jpg" alt="Cargador de 20w" loading="lazy">
+            <div class="product-card__img-overlay"></div>
+          </div>
+          <div class="product-card__actions">
+            <button class="product-card__action-btn" title="Consultar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="product-card__body">
+            <div class="product-card__category">Cargadores</div>
+            <h3 class="product-card__name">Cargador de 20w</h3>
+            <p class="product-card__desc">Cargador rápido de 20W Power Adapter. Carga segura y veloz para tu smartphone.</p>
+            <div class="product-card__footer">
+              <div class="product-card__price">$15<span class="product-card__price-old">$20</span></div>
+              <a href="https://wa.me/584120500675?text=Hola!%20Me%20interesa%20el%20Cargador%20de%2020w" target="_blank" class="product-card__whatsapp">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Pedir
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 2: Panel led RGB -->
+        <div class="product-card show reveal" data-category="iluminacion">
+          <span class="product-card__badge product-card__badge--new">Nuevo</span>
+          <div class="product-card__img">
+            <img src="images/panel_led_rgb.jpg" alt="Panel led RGB" loading="lazy">
+            <div class="product-card__img-overlay"></div>
+          </div>
+          <div class="product-card__actions">
+            <button class="product-card__action-btn" title="Consultar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="product-card__body">
+            <div class="product-card__category">Iluminación LED</div>
+            <h3 class="product-card__name">Panel led RGB</h3>
+            <p class="product-card__desc">Panel de luz LED RGB de bolsillo. Múltiples efectos de color e intensidad regulable.</p>
+            <div class="product-card__footer">
+              <div class="product-card__price">$15<span class="product-card__price-old">$22</span></div>
+              <a href="https://wa.me/584120500675?text=Hola!%20Me%20interesa%20el%20Panel%20led%20RGB" target="_blank" class="product-card__whatsapp">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Pedir
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 3: Panel led RGB -->
+        <div class="product-card show reveal" data-category="iluminacion">
+          <span class="product-card__badge product-card__badge--hot">Popular</span>
+          <div class="product-card__img">
+            <img src="images/panel_led_rgb.jpg" alt="Panel led RGB" loading="lazy">
+            <div class="product-card__img-overlay"></div>
+          </div>
+          <div class="product-card__actions">
+            <button class="product-card__action-btn" title="Consultar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="product-card__body">
+            <div class="product-card__category">Iluminación LED</div>
+            <h3 class="product-card__name">Panel led RGB</h3>
+            <p class="product-card__desc">Panel LED RGB profesional con control de brillo y temperatura de color para streaming.</p>
+            <div class="product-card__footer">
+              <div class="product-card__price">$15<span class="product-card__price-old">$20</span></div>
+              <a href="https://wa.me/584120500675?text=Hola!%20Me%20interesa%20el%20Panel%20led%20RGB" target="_blank" class="product-card__whatsapp">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Pedir
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 4: AirPods Pro 3gen -->
+        <div class="product-card show reveal" data-category="audio">
+          <span class="product-card__badge product-card__badge--hot">Popular</span>
+          <div class="product-card__img">
+            <img src="images/airpods_pro_3gen.jpg" alt="AirPods Pro 3gen" loading="lazy">
+            <div class="product-card__img-overlay"></div>
+          </div>
+          <div class="product-card__actions">
+            <button class="product-card__action-btn" title="Consultar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="product-card__body">
+            <div class="product-card__category">Audífonos</div>
+            <h3 class="product-card__name">AirPods Pro 3gen</h3>
+            <p class="product-card__desc">AirPods Pro de 3ra Generación con Cancelación Activa de Ruido y estuche MagSafe.</p>
+            <div class="product-card__footer">
+              <div class="product-card__price">$25<span class="product-card__price-old">$35</span></div>
+              <a href="https://wa.me/584120500675?text=Hola!%20Me%20interesan%20los%20AirPods%20Pro%203gen" target="_blank" class="product-card__whatsapp">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Pedir
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 5: AirPods Pro Max -->
+        <div class="product-card show reveal" data-category="audio">
+          <span class="product-card__badge product-card__badge--sale">Oferta</span>
+          <div class="product-card__img">
+            <img src="images/airpods_pro_max.jpg" alt="AirPods Pro Max" loading="lazy">
+            <div class="product-card__img-overlay"></div>
+          </div>
+          <div class="product-card__actions">
+            <button class="product-card__action-btn" title="Consultar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="product-card__body">
+            <div class="product-card__category">Audífonos</div>
+            <h3 class="product-card__name">AirPods Pro Max</h3>
+            <p class="product-card__desc">Audífonos de diadema premium AirPods Pro Max con audio espacial de alta fidelidad.</p>
+            <div class="product-card__footer">
+              <div class="product-card__price">$45<span class="product-card__price-old">$65</span></div>
+              <a href="https://wa.me/584120500675?text=Hola!%20Me%20interesan%20los%20AirPods%20Pro%20Max" target="_blank" class="product-card__whatsapp">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Pedir
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 6: Panel led sencillo -->
+        <div class="product-card show reveal" data-category="iluminacion">
+          <div class="product-card__img">
+            <img src="images/panel_led_sencillo.jpg" alt="Panel led sencillo" loading="lazy">
+            <div class="product-card__img-overlay"></div>
+          </div>
+          <div class="product-card__actions">
+            <button class="product-card__action-btn" title="Consultar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="product-card__body">
+            <div class="product-card__category">Iluminación LED</div>
+            <h3 class="product-card__name">Panel led sencillo</h3>
+            <p class="product-card__desc">Panel de luz LED continua blanca y cálida con difusor suave y batería recargable.</p>
+            <div class="product-card__footer">
+              <div class="product-card__price">$12<span class="product-card__price-old">$18</span></div>
+              <a href="https://wa.me/584120500675?text=Hola!%20Me%20interesa%20el%20Panel%20led%20sencillo" target="_blank" class="product-card__whatsapp">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Pedir
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 7: Balón de futbol americano -->
+        <div class="product-card show reveal" data-category="varios">
+          <span class="product-card__badge product-card__badge--hot">Exclusivo</span>
+          <div class="product-card__img">
+            <img src="images/balon_futbol.jpg" alt="Balón de futbol americano" loading="lazy">
+            <div class="product-card__img-overlay"></div>
+          </div>
+          <div class="product-card__actions">
+            <button class="product-card__action-btn" title="Consultar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="product-card__body">
+            <div class="product-card__category">Artículos Varios</div>
+            <h3 class="product-card__name">Balón de futbol americano</h3>
+            <p class="product-card__desc">Balón de fútbol americano en cuero sintético de alta resistencia y grip antideslizante.</p>
+            <div class="product-card__footer">
+              <div class="product-card__price">$25<span class="product-card__price-old">$35</span></div>
+              <a href="https://wa.me/584120500675?text=Hola!%20Me%20interesa%20el%20Balón%20de%20futbol%20americano" target="_blank" class="product-card__whatsapp">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Pedir
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 8: Cable Lightning - type C -->
+        <div class="product-card show reveal" data-category="accesorios">
+          <div class="product-card__img">
+            <img src="images/cable_lightning_typec.jpg" alt="Cable Lightning - type C" loading="lazy">
+            <div class="product-card__img-overlay"></div>
+          </div>
+          <div class="product-card__actions">
+            <button class="product-card__action-btn" title="Consultar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="product-card__body">
+            <div class="product-card__category">Cargadores & Cables</div>
+            <h3 class="product-card__name">Cable Lightning - type C</h3>
+            <p class="product-card__desc">Cable USB-C a Lightning de 1 metro para carga rápida PD de iPhones e iPads.</p>
+            <div class="product-card__footer">
+              <div class="product-card__price">$5<span class="product-card__price-old">$8</span></div>
+              <a href="https://wa.me/584120500675?text=Hola!%20Me%20interesa%20el%20Cable%20Lightning%20-%20type%20C" target="_blank" class="product-card__whatsapp">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Pedir
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 9: Cable type C - Type C -->
+        <div class="product-card show reveal" data-category="accesorios">
+          <div class="product-card__img">
+            <img src="images/cable_typec_typec.jpg" alt="Cable type C - Type C" loading="lazy">
+            <div class="product-card__img-overlay"></div>
+          </div>
+          <div class="product-card__actions">
+            <button class="product-card__action-btn" title="Consultar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="product-card__body">
+            <div class="product-card__category">Cargadores & Cables</div>
+            <h3 class="product-card__name">Cable type C - Type C</h3>
+            <p class="product-card__desc">Cable trenzado USB-C a USB-C de 60W para laptops, tablets y celulares.</p>
+            <div class="product-card__footer">
+              <div class="product-card__price">$10<span class="product-card__price-old">$15</span></div>
+              <a href="https://wa.me/584120500675?text=Hola!%20Me%20interesa%20el%20Cable%20type%20C%20-%20Type%20C" target="_blank" class="product-card__whatsapp">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Pedir
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 10: Cargador dynamic 60w -->
+        <div class="product-card show reveal" data-category="accesorios">
+          <span class="product-card__badge product-card__badge--hot">Popular</span>
+          <div class="product-card__img">
+            <img src="images/cargador_dynamic_60w.jpg" alt="Cargador dynamic 60w" loading="lazy">
+            <div class="product-card__img-overlay"></div>
+          </div>
+          <div class="product-card__actions">
+            <button class="product-card__action-btn" title="Consultar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="product-card__body">
+            <div class="product-card__category">Cargadores</div>
+            <h3 class="product-card__name">Cargador dynamic 60w</h3>
+            <p class="product-card__desc">Cargador rápido Dynamic de 60W con tecnología GaN y múltiples salidas.</p>
+            <div class="product-card__footer">
+              <div class="product-card__price">$20<span class="product-card__price-old">$28</span></div>
+              <a href="https://wa.me/584120500675?text=Hola!%20Me%20interesa%20el%20Cargador%20dynamic%2060w" target="_blank" class="product-card__whatsapp">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Pedir
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 11: MagSafe charger 20w -->
+        <div class="product-card show reveal" data-category="accesorios">
+          <span class="product-card__badge product-card__badge--new">Nuevo</span>
+          <div class="product-card__img">
+            <img src="images/magsafe_charger_20w.jpg" alt="MagSafe charger 20w" loading="lazy">
+            <div class="product-card__img-overlay"></div>
+          </div>
+          <div class="product-card__actions">
+            <button class="product-card__action-btn" title="Consultar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="product-card__body">
+            <div class="product-card__category">Cargadores</div>
+            <h3 class="product-card__name">MagSafe charger 20w</h3>
+            <p class="product-card__desc">Cargador inalámbrico magnético MagSafe de 20W. Alineación magnética rápida para iPhone.</p>
+            <div class="product-card__footer">
+              <div class="product-card__price">$15<span class="product-card__price-old">$22</span></div>
+              <a href="https://wa.me/584120500675?text=Hola!%20Me%20interesa%20el%20MagSafe%20charger%2020w" target="_blank" class="product-card__whatsapp">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Pedir
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FEATURES ═══════════ -->
+  <section class="features" id="nosotros">
+    <div class="container">
+      <h2 class="section-title reveal">¿Por qué elegirnos?</h2>
+      <p class="section-subtitle reveal">Calidad, confianza y los mejores precios en tecnología</p>
+
+      <div class="features__grid">
+        <div class="feature-card reveal">
+          <div class="feature-card__icon">🛡️</div>
+          <h3 class="feature-card__title">Garantía en Productos</h3>
+          <p class="feature-card__desc">Todos nuestros productos cuentan con garantía. Tu compra está protegida con nosotros.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-card__icon">💰</div>
+          <h3 class="feature-card__title">Mejores Precios</h3>
+          <p class="feature-card__desc">Precios competitivos en toda nuestra línea de productos tecnológicos.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-card__icon">🚀</div>
+          <h3 class="feature-card__title">Entrega Rápida</h3>
+          <p class="feature-card__desc">Retira en tienda o coordina entrega. Atención rápida por WhatsApp.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-card__icon">⭐</div>
+          <h3 class="feature-card__title">Calidad Comprobada</h3>
+          <p class="feature-card__desc">+1200 clientes satisfechos. Productos seleccionados y verificados.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ CONTACT ═══════════ -->
+  <section class="contact" id="contacto">
+    <div class="container">
+      <h2 class="section-title reveal">Encuéntranos</h2>
+      <p class="section-subtitle reveal">Visítanos en tienda o contáctanos por nuestras redes</p>
+
+      <div class="contact__grid">
+        <div class="contact__info reveal">
+
+          <a href="https://wa.me/584120500675?text=Hola%20RBstore!" target="_blank" class="contact__card">
+            <div class="contact__card-icon">💬</div>
+            <div>
+              <div class="contact__card-title">WhatsApp</div>
+              <div class="contact__card-text">0412-0500675</div>
+            </div>
+          </a>
+
+          <a href="https://instagram.com/R_bstoree" target="_blank" class="contact__card">
+            <div class="contact__card-icon">📸</div>
+            <div>
+              <div class="contact__card-title">Instagram</div>
+              <div class="contact__card-text">@R_bstoree</div>
+            </div>
+          </a>
+
+          <a href="https://maps.apple.com/place?coordinate=9.567589,-69.199429&name=RBstore&map=explore" target="_blank" class="contact__card">
+            <div class="contact__card-icon">📍</div>
+            <div>
+              <div class="contact__card-title">Ubicación</div>
+              <div class="contact__card-text">Centro Comercial Central, Planta Baja, Local 10</div>
+            </div>
+          </a>
+
+          <div class="contact__card">
+            <div class="contact__card-icon">🕐</div>
+            <div>
+              <div class="contact__card-title">Horario</div>
+              <div class="contact__card-text">Lunes a Sábado: 9:00 AM – 6:00 PM</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="contact__map reveal">
+          <iframe src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d1000!2d-69.199429!3d9.567589!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zOcKwMzQnMDMuMyJOIDY5wrAxMSc1Ny45Ilc!5e0!3m2!1ses!2sve!4v1694000000000" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__copy">© 2025 RBstore. Todos los derechos reservados.</div>
+      <div class="footer__socials">
+        <a href="https://wa.me/584120500675" target="_blank" class="footer__social" title="WhatsApp">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        </a>
+        <a href="https://instagram.com/R_bstoree" target="_blank" class="footer__social" title="Instagram">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══════════ FLOATING WHATSAPP ═══════════ -->
+  <a href="https://wa.me/584120500675?text=Hola%20RBstore!%20Me%20interesa%20un%20producto" target="_blank" class="whatsapp-float" id="whatsappFloat">
+    <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    <span class="whatsapp-float__tooltip">¡Escríbenos por WhatsApp!</span>
+  </a>
+
+  <!-- ═══════════ SCROLL TO TOP ═══════════ -->
+  <button class="scroll-top" id="scrollTop" aria-label="Ir arriba">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+  </button>
+
+  <script src="app.js"></script>
+</body>
+</html>
