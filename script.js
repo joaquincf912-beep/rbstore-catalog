@@ -590,10 +590,32 @@ function resetDefaultCatalog() {
   }
 }
 
-// UPDATE STATS
+// UPDATE STATS & COUNTER ANIMATION
 function updateStats() {
   const countEl = document.getElementById("stat-productos");
   if (countEl) countEl.innerText = products.length;
+
+  const counters = document.querySelectorAll("[data-count]");
+  counters.forEach(el => {
+    const target = parseInt(el.getAttribute("data-count"));
+    if (!target) return;
+    const isBig = target > 50;
+    const duration = 1200;
+    const startTime = performance.now();
+
+    function step(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const current = Math.floor(progress * target);
+      el.innerText = isBig ? `${current}+` : `${current}`;
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        el.innerText = isBig ? `${target}+` : `${target}`;
+      }
+    }
+    requestAnimationFrame(step);
+  });
 }
 
 // TOAST NOTIFICATIONS
