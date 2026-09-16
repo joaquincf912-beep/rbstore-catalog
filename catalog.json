@@ -1,17 +1,33 @@
 {
   "categories": [
-    { "id": "cargadores", "name": "Cargadores & Cables", "icon": "⚡" },
-    { "id": "iluminacion", "name": "Iluminación LED", "icon": "💡" },
-    { "id": "audifonos", "name": "Audífonos", "icon": "🎧" },
-    { "id": "varios", "name": "Artículos Varios", "icon": "📦" }
+    {
+      "id": "cargadores",
+      "name": "Cargadores & Cables",
+      "icon": "⚡"
+    },
+    {
+      "id": "iluminacion",
+      "name": "Iluminación LED",
+      "icon": "💡"
+    },
+    {
+      "id": "audifonos",
+      "name": "Audífonos",
+      "icon": "🎧"
+    },
+    {
+      "id": "varios",
+      "name": "Artículos Varios",
+      "icon": "📦"
+    }
   ],
   "products": [
     {
       "id": "rb1",
       "name": "Cargador de 20w",
       "sector": "cargadores",
-      "price": 15.00,
-      "oldPrice": 20.00,
+      "price": 15,
+      "oldPrice": 20,
       "badge": "popular",
       "image": "images/cargador_20w.jpg",
       "description": "Cargador rápido de 20W USB-C Power Adapter con carga super veloz y protección de voltaje para iPhone y dispositivos compatibles."
@@ -20,8 +36,8 @@
       "id": "rb2",
       "name": "Panel led RGB",
       "sector": "iluminacion",
-      "price": 15.00,
-      "oldPrice": 22.00,
+      "price": 15,
+      "oldPrice": 22,
       "badge": "nuevo",
       "image": "images/panel_led_rgb.jpg",
       "description": "Panel de luz LED RGB de bolsillo (AY-83). Efectos multicolor, rotación 150° y rosca 1/4 para trípode o cámara."
@@ -30,8 +46,8 @@
       "id": "rb4",
       "name": "AirPods Pro 3gen",
       "sector": "audifonos",
-      "price": 25.00,
-      "oldPrice": 35.00,
+      "price": 25,
+      "oldPrice": 35,
       "badge": "popular",
       "image": "images/airpods_pro_3gen.jpg",
       "description": "AirPods Pro de 3ra Generación con Cancelación Activa de Ruido, modo ambiente y estuche de carga magnética."
@@ -40,8 +56,8 @@
       "id": "rb5",
       "name": "AirPods Pro Max",
       "sector": "audifonos",
-      "price": 45.00,
-      "oldPrice": 65.00,
+      "price": 45,
+      "oldPrice": 65,
       "badge": "oferta",
       "image": "images/airpods_pro_max.jpg",
       "description": "Audífonos de diadema premium AirPods Pro Max con audio espacial de alta fidelidad y almohadillas de malla de memoria."
@@ -50,8 +66,8 @@
       "id": "rb6",
       "name": "Panel led sencillo",
       "sector": "iluminacion",
-      "price": 12.00,
-      "oldPrice": 18.00,
+      "price": 12,
+      "oldPrice": 18,
       "badge": "",
       "image": "images/panel_led_sencillo.jpg",
       "description": "Panel de luz LED continua blanca y cálida con difusor suave, batería recargable y soporte universal."
@@ -60,8 +76,8 @@
       "id": "rb7",
       "name": "Balón de futbol americano",
       "sector": "varios",
-      "price": 25.00,
-      "oldPrice": 35.00,
+      "price": 25,
+      "oldPrice": 35,
       "badge": "exclusivo",
       "image": "images/balon_futbol.jpg",
       "description": "Balón de fútbol americano en cuero sintético de alta resistencia, grip antideslizante y costuras reforzadas."
@@ -70,8 +86,8 @@
       "id": "rb8",
       "name": "Cable Lightning - type C",
       "sector": "cargadores",
-      "price": 5.00,
-      "oldPrice": 8.00,
+      "price": 5,
+      "oldPrice": 8,
       "badge": "",
       "image": "images/cable_lightning_typec.jpg",
       "description": "Cable USB-C a Lightning de 1 metro para carga rápida PD de iPhones e iPads con conectores reforzados."
@@ -80,8 +96,8 @@
       "id": "rb9",
       "name": "Cable type C - Type C",
       "sector": "cargadores",
-      "price": 10.00,
-      "oldPrice": 15.00,
+      "price": 10,
+      "oldPrice": 15,
       "badge": "",
       "image": "images/cable_typec_typec.jpg",
       "description": "Cable trenzado USB-C a USB-C de 60W y 1.2m para laptops, tablets y celulares con carga ultra rápida."
@@ -90,8 +106,8 @@
       "id": "rb10",
       "name": "Cargador dynamic 60w",
       "sector": "cargadores",
-      "price": 20.00,
-      "oldPrice": 28.00,
+      "price": 20,
+      "oldPrice": 28,
       "badge": "popular",
       "image": "images/cargador_dynamic_60w.jpg",
       "description": "Cargador rápido Dynamic de 60W con tecnología GaN, doble salida USB-C + USB-A y carga simultánea inteligente."
@@ -100,11 +116,12 @@
       "id": "rb11",
       "name": "MagSafe charger 20w",
       "sector": "cargadores",
-      "price": 15.00,
-      "oldPrice": 22.00,
+      "price": 15,
+      "oldPrice": 22,
       "badge": "nuevo",
       "image": "images/magsafe_charger_20w.jpg",
       "description": "Cargador inalámbrico magnético MagSafe de 20W. Alineación magnética rápida e instantánea para iPhone."
     }
-  ]
+  ],
+  "exportedAt": "2026-09-16T17:24:03.366Z"
 }
