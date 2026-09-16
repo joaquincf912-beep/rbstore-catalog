@@ -596,30 +596,43 @@ button { cursor: pointer; font: inherit; border: none; background: none; }
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.product-card__price-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
 }
 
 .product-card__price {
   font-family: 'Outfit', sans-serif;
-  font-size: 1.3rem;
-  font-weight: 700;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--accent-bright);
+  line-height: 1.1;
 }
 .product-card__price-old {
-  font-size: .85rem;
+  font-size: .8rem;
   font-weight: 400;
   color: var(--text-muted);
   text-decoration: line-through;
-  margin-left: 8px;
+  line-height: 1.1;
 }
 
 .product-card__whatsapp {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 18px;
+  padding: 8px 16px;
   background: #25d366;
   color: #fff;
   font-size: .82rem;
   font-weight: 600;
   border-radius: 50px;
   transition: var(--transition);
+  flex-shrink: 0;
 }
 .product-card__whatsapp:hover {
   background: #22c55e;
@@ -978,32 +991,44 @@ button { cursor: pointer; font: inherit; border: none; background: none; }
   }
   .product-card__footer {
     display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+  }
+  .product-card__price-box {
+    display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-top: 6px;
+    align-items: flex-start;
   }
   .product-card__price {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 800;
     color: var(--accent-bright);
-    text-align: center;
-    display: flex;
+    line-height: 1.1;
+  }
+  .product-card__price-old {
+    font-size: .72rem;
+    color: var(--text-muted);
+    text-decoration: line-through;
+    line-height: 1.1;
+  }
+  .product-card__whatsapp {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
-  }
-  .product-card__price-old {
-    font-size: .75rem;
-    color: var(--text-muted);
-    text-decoration: line-through;
-  }
-  .product-card__whatsapp {
-    justify-content: center;
-    padding: 8px 4px;
-    font-size: .75rem;
-    font-weight: 700;
-    border-radius: 6px;
-    width: 100%;
+    padding: 6px 10px;
+    font-size: .74rem;
+    font-weight: 600;
+    border-radius: 8px;
+    width: auto;
+    flex-shrink: 0;
+    background: #25d366;
+    color: #fff;
   }
 
   .contact { padding: 45px 0 30px; }
