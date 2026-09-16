@@ -463,6 +463,8 @@ function setupEventListeners() {
   document.getElementById("btnCancelForm")?.addEventListener("click", hideProductForm);
   document.getElementById("productForm")?.addEventListener("submit", handleProductFormSubmit);
   document.getElementById("btnResetDefaultCatalog")?.addEventListener("click", resetDefaultCatalog);
+  document.getElementById("btnToggleCategoryForm")?.addEventListener("click", toggleAddCategoryForm);
+  document.getElementById("categoryForm")?.addEventListener("submit", handleCategoryFormSubmit);
 }
 
 // ═══════════════════════════════════════════════
@@ -905,3 +907,16 @@ function showToast(message) {
     toast.classList.remove("show");
   }, 3000);
 }
+
+// GLOBAL WINDOW EXPORTS FOR INLINE ONCLICK HANDLERS
+window.toggleAddCategoryForm = toggleAddCategoryForm;
+window.handleCategoryFormSubmit = handleCategoryFormSubmit;
+window.deleteCategory = deleteCategory;
+window.openAdminModal = openAdminModal;
+window.closeAdminModal = closeAdminModal;
+window.submitAdminLogin = submitAdminLogin;
+window.showAddProductForm = showAddProductForm;
+window.hideProductForm = hideProductForm;
+window.editProduct = editProduct;
+window.deleteProduct = deleteProduct;
+window.handleImageFileUpload = handleImageFileUpload;
