@@ -353,8 +353,27 @@ button { cursor: pointer; font: inherit; border: none; background: none; }
 }
 
 .cat-card__icon {
-  font-size: 2.2rem;
-  margin-bottom: 12px;
+  width: 44px; height: 44px;
+  margin: 0 auto 12px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(61, 139, 253, .08);
+  border: 1px solid rgba(61, 139, 253, .15);
+  border-radius: var(--radius-sm);
+  color: var(--accent-bright);
+  transition: all .2s ease;
+}
+.cat-card:hover .cat-card__icon,
+.cat-card.active .cat-card__icon {
+  background: var(--accent-bright);
+  border-color: var(--accent-bright);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(61, 139, 253, .35);
+}
+.cat-card__icon svg {
+  width: 22px !important;
+  height: 22px !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
 }
 .cat-card__name {
   font-weight: 600;
