@@ -273,18 +273,24 @@ function setupEventListeners() {
   // Mobile Menu Toggle
   const navToggle = document.getElementById("navToggle");
   const navLinks = document.getElementById("navLinks");
+  const navCta = document.getElementById("navCta");
   if (navToggle && navLinks) {
     navToggle.addEventListener("click", () => {
       navToggle.classList.toggle("active");
       navLinks.classList.toggle("open");
+      if (navCta) navCta.classList.toggle("open");
     });
 
+    const closeNav = () => {
+      navToggle.classList.remove("active");
+      navLinks.classList.remove("open");
+      if (navCta) navCta.classList.remove("open");
+    };
+
     navLinks.querySelectorAll("a").forEach(link => {
-      link.addEventListener("click", () => {
-        navToggle.classList.remove("active");
-        navLinks.classList.remove("open");
-      });
+      link.addEventListener("click", closeNav);
     });
+    if (navCta) navCta.addEventListener("click", closeNav);
   }
 
   // Category Cards Filter
