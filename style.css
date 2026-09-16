@@ -882,8 +882,9 @@ button { cursor: pointer; font: inherit; border: none; background: none; }
 }
 
 @media (max-width: 768px) {
-  .header__logo span { display: none; }
-  .header__logo img { height: 38px; max-width: 130px; }
+  .header__logo { gap: 8px; }
+  .header__logo img { height: 34px; width: auto; max-width: 90px; }
+  .header__logo span { display: inline-block; font-size: 1.2rem; font-weight: 800; }
 
   .nav__links, .nav__cta { display: none; }
   .nav__toggle { display: flex; }
