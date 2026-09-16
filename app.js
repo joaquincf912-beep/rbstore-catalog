@@ -797,6 +797,9 @@ function handleCategoryFormSubmit(e) {
   renderCategoriesGrid();
   renderSectorOptions();
   renderAdminCategoriesList();
+  renderProductsGrid();
+  renderAdminProductsTable();
+  updateStats();
 
   nameInput.value = "";
   if (iconInput) iconInput.value = "";
@@ -845,6 +848,7 @@ function deleteCategory(catId) {
     renderAdminCategoriesList();
     renderProductsGrid();
     renderAdminProductsTable();
+    updateStats();
 
     showToast(`Categoría "${cat.name}" eliminada`);
   }
@@ -881,19 +885,17 @@ function updateStats() {
 }
 
 function updateCategoryCounts() {
-  const counts = {
-    todos: products.length,
-    cargadores: products.filter(p => p.sector === "cargadores").length,
-    iluminacion: products.filter(p => p.sector === "iluminacion").length,
-    audifonos: products.filter(p => p.sector === "audifonos").length,
-    varios: products.filter(p => p.sector === "varios").length
-  };
+  // Build counts dynamically for ALL categories
+  const counts = { todos: products.length };
+  categories.forEach(cat => {
+    counts[cat.id] = products.filter(p => p.sector === cat.id).length;
+  });
 
   document.querySelectorAll(".cat-card").forEach(card => {
     const cat = card.getAttribute("data-category");
     const countEl = card.querySelector(".cat-card__count");
-    if (countEl && counts[cat] !== undefined) {
-      const num = counts[cat];
+    if (countEl) {
+      const num = counts[cat] !== undefined ? counts[cat] : 0;
       countEl.innerText = `${num} ${num === 1 ? 'producto' : 'productos'}`;
     }
   });
