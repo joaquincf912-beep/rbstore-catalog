@@ -152,20 +152,22 @@ async function initApp() {
 
 // FETCH REMOTE CATALOG.JSON (Single source of truth for all visitors)
 async function loadRemoteCatalogData() {
+  const hasLocalEdits = localStorage.getItem("rbstore_owner_has_local_edits") === "true";
+
   try {
     const res = await fetch(`catalog.json?v=${Date.now()}`);
     if (res.ok) {
       const data = await res.json();
       
       let updated = false;
-      if (data.products && Array.isArray(data.products) && data.products.length > 0) {
+      if (!hasLocalEdits && data.products && Array.isArray(data.products) && data.products.length > 0) {
         products = data.products;
         localStorage.setItem(RBSTORE_CONFIG.storageKey, JSON.stringify(products));
         DEFAULT_PRODUCTS.length = 0;
         DEFAULT_PRODUCTS.push(...data.products);
         updated = true;
       }
-      if (data.categories && Array.isArray(data.categories) && data.categories.length > 0) {
+      if (!hasLocalEdits && data.categories && Array.isArray(data.categories) && data.categories.length > 0) {
         categories = data.categories;
         localStorage.setItem("rbstore_categories_v2", JSON.stringify(categories));
         DEFAULT_CATEGORIES.length = 0;
@@ -204,6 +206,7 @@ function loadCategoriesData() {
 function saveCategoriesData() {
   try {
     localStorage.setItem("rbstore_categories_v2", JSON.stringify(categories));
+    localStorage.setItem("rbstore_owner_has_local_edits", "true");
     autoSyncToCloud();
   } catch(e) {
     console.error("Error saving categories to localStorage", e);
@@ -243,6 +246,7 @@ function loadCatalogData() {
 function saveCatalogData() {
   try {
     localStorage.setItem(RBSTORE_CONFIG.storageKey, JSON.stringify(products));
+    localStorage.setItem("rbstore_owner_has_local_edits", "true");
     autoSyncToCloud();
   } catch(e) {
     console.error("Error saving catalog to localStorage", e);
