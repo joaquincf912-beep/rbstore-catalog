@@ -4,7 +4,7 @@
 
 import { 
   db, storage, auth,
-  collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy,
+  collection, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy,
   ref, uploadBytes, getDownloadURL,
   signInWithEmailAndPassword, signOut, onAuthStateChanged 
 } from "./firebase-config.js";
@@ -160,9 +160,10 @@ async function initApp() {
   console.log(`[RBstore] Catálogo cargado: ${products.length} productos, ${categories.length} categorías`);
 }
 
-// FIREBASE REALTIME FIRESTORE LISTENER
+// FIREBASE REALTIME FIRESTORE LISTENER (Productos + Categorías)
 function initFirebaseSync() {
   try {
+    // 1. Productos Listener
     const q = query(collection(db, "productos"));
     onSnapshot(q, (snapshot) => {
       if (!snapshot.empty) {
@@ -187,11 +188,38 @@ function initFirebaseSync() {
         renderProductsGrid();
         renderAdminProductsTable();
         updateStats();
-        console.log(`[RBstore Firebase] 🔥 ${products.length} productos sincronizados en tiempo real desde Firestore (rbstore-a959f)`);
+        console.log(`[RBstore Firebase] 🔥 ${products.length} productos sincronizados en tiempo real desde Firestore`);
       }
     }, (err) => {
-      console.log("[RBstore Firebase] Firestore listener status:", err.message);
+      console.log("[RBstore Firebase] Firestore productos listener status:", err.message);
     });
+
+    // 2. Categorías Listener
+    const catQuery = query(collection(db, "categorias"));
+    onSnapshot(catQuery, (catSnapshot) => {
+      if (!catSnapshot.empty) {
+        const firestoreCategories = [];
+        catSnapshot.forEach((cSnap) => {
+          const cData = cSnap.data();
+          firestoreCategories.push({
+            id: cSnap.id,
+            name: cData.name || cData.nombre || "Categoría",
+            icon: cData.icon || cData.icono || "📦"
+          });
+        });
+
+        if (firestoreCategories.length > 0) {
+          categories = firestoreCategories;
+          renderCategoriesGrid();
+          renderSectorOptions();
+          renderAdminCategoriesList();
+          console.log(`[RBstore Firebase] 🏠 ${categories.length} categorías sincronizadas en tiempo real desde Firestore`);
+        }
+      }
+    }, (cErr) => {
+      console.log("[RBstore Firebase] Firestore categorias listener status:", cErr.message);
+    });
+
   } catch(e) {
     console.log("[RBstore Firebase] Firestore setup:", e);
   }
@@ -994,7 +1022,7 @@ function toggleAddCategoryForm() {
   }
 }
 
-function handleCategoryFormSubmit(e) {
+async function handleCategoryFormSubmit(e) {
   e.preventDefault();
   const nameInput = document.getElementById("newCatName");
   const iconInput = document.getElementById("newCatIcon");
@@ -1004,18 +1032,31 @@ function handleCategoryFormSubmit(e) {
   if (!name) return;
 
   const icon = iconInput ? (iconInput.value.trim() || "📦") : "📦";
-  const id = name.toLowerCase()
+  const catId = name.toLowerCase()
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]/g, "_")
     .replace(/_+/g, "_");
 
-  if (categories.some(c => c.id === id)) {
+  if (categories.some(c => c.id === catId)) {
     showToast("Esta categoría ya existe");
     return;
   }
 
-  categories.push({ id, name, icon });
+  const newCat = { id: catId, name, icon };
+  categories.push(newCat);
   saveCategoriesData();
+
+  // Save to Cloud Firestore "categorias" collection in real-time!
+  try {
+    await setDoc(doc(db, "categorias", catId), {
+      name: name,
+      icon: icon,
+      creadoEn: serverTimestamp()
+    });
+    showToast(`🔥 Categoría "${name}" guardada en Firestore en tiempo real`);
+  } catch(err) {
+    console.error("Error guardando categoría en Firestore:", err);
+  }
 
   renderCategoriesGrid();
   renderSectorOptions();
@@ -1026,7 +1067,6 @@ function handleCategoryFormSubmit(e) {
 
   nameInput.value = "";
   if (iconInput) iconInput.value = "";
-  showToast(`Categoría "${name}" creada con éxito!`);
 }
 
 function renderAdminCategoriesList() {
@@ -1045,7 +1085,7 @@ function renderAdminCategoriesList() {
   container.innerHTML = html;
 }
 
-function deleteCategory(catId) {
+async function deleteCategory(catId) {
   const cat = categories.find(c => c.id === catId);
   if (!cat) return;
 
@@ -1056,8 +1096,14 @@ function deleteCategory(catId) {
 
   if (confirm(`¿Seguro que deseas eliminar la categoría "${cat.name}"? Los productos asignados serán reasignados.`)) {
     categories = categories.filter(c => c.id !== catId);
-    
-    // Re-assign products to the first remaining category
+
+    try {
+      await deleteDoc(doc(db, "categorias", catId));
+      showToast(`🔥 Categoría "${cat.name}" eliminada de Firestore`);
+    } catch(err) {
+      console.error("Error eliminando categoría de Firestore:", err);
+    }
+
     const fallbackId = categories[0].id;
     products.forEach(p => {
       if (p.sector === catId) p.sector = fallbackId;
@@ -1072,8 +1118,6 @@ function deleteCategory(catId) {
     renderProductsGrid();
     renderAdminProductsTable();
     updateStats();
-
-    showToast(`Categoría "${cat.name}" eliminada`);
   }
 }
 
