@@ -9,7 +9,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="style.css?v=50.0">
+  <link rel="stylesheet" href="style.css?v=51.0">
 </head>
 <body>
 
@@ -300,27 +300,7 @@
         <div class="admin-toolbar" style="gap: 10px; flex-wrap: wrap;">
           <button id="btnShowAddProduct" class="btn btn--primary">+ Agregar Producto</button>
           <button id="btnToggleCategoryForm" class="btn btn--secondary" style="background: rgba(61, 139, 253, 0.15); color: var(--accent-bright); border: 1px solid var(--border-accent);">+ Nueva Categoría</button>
-          <button id="btnSeedFirestore" class="btn btn--outline" onclick="seedInitialDataToFirestore()" style="color: #f97316; border-color: rgba(249,115,22,0.3);" title="Subir catálogo inicial a Cloud Firestore">🔥 Sembrar en Firestore</button>
-          <button id="btnRecoverLostProducts" class="btn btn--outline" onclick="recoverLostProducts()" style="color: #a855f7; border-color: rgba(168,85,247,0.3);" title="Escanear memoria del navegador para buscar borradores anteriores">🔍 Recuperar Borradores</button>
-          <button id="btnExportCatalog" class="btn btn--outline" onclick="exportCatalogData()" title="Descargar copia de respaldo en JSON">📥 Exportar</button>
-          <button id="btnImportCatalog" class="btn btn--outline" onclick="triggerImportCatalog()" title="Cargar catálogo desde archivo JSON">📤 Importar</button>
-          <button id="btnCopyCatalogCode" class="btn btn--outline" onclick="copyCatalogJSONToClipboard()" title="Copiar datos para actualizar web pública">📋 Copiar Datos</button>
           <button id="btnResetDefaultCatalog" class="btn btn--outline" style="color: #ef4444; border-color: rgba(239,68,68,0.3);">Restablecer</button>
-          <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportCatalogFile(this)">
-        </div>
-
-        <!-- Auto-Sync Config Panel (hidden by default) -->
-        <div id="adminAutoSyncContainer" style="display: none; background: rgba(56,189,248,0.06); padding: 16px; border-radius: var(--radius-sm); border: 1px solid rgba(56,189,248,0.25); margin-top: 16px; margin-bottom: 20px;">
-          <h4 style="margin-bottom: 8px; font-size: 0.95rem; color: #38bdf8;">⚡ Sincronización Automática en la Nube (GitHub Pages)</h4>
-          <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">
-            Al conectar tu <strong>Token de GitHub</strong>, todos los cambios que hagas (agregar, editar o eliminar productos) se actualizarán <strong>automáticamente en vivo para todos los clientes y visitantes</strong>.
-          </p>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-            <input type="password" id="ghTokenInput" placeholder="Pega aquí tu GitHub Token (ghp_...)" class="admin-input" style="flex: 1; min-width: 220px;">
-            <button type="button" class="btn btn--primary" onclick="saveGitHubToken()" style="padding: 10px 16px;">Guardar Token</button>
-            <button type="button" class="btn btn--outline" onclick="removeGitHubToken()" style="color: #ef4444; border-color: rgba(239,68,68,0.3); padding: 10px 12px;">Desconectar</button>
-          </div>
-          <div id="autoSyncStatusMsg" style="margin-top: 10px; font-size: 0.78rem; color: var(--text-muted);"></div>
         </div>
 
         <!-- Add Category Form (hidden by default) -->
@@ -403,6 +383,6 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
   </button>
 
-  <script type="module" src="app.js?v=50.0"></script>
+  <script type="module" src="app.js?v=51.0"></script>
 </body>
 </html>
