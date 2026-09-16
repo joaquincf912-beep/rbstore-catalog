@@ -201,6 +201,7 @@ function loadCategoriesData() {
 function saveCategoriesData() {
   try {
     localStorage.setItem("rbstore_categories_v2", JSON.stringify(categories));
+    autoSyncToCloud();
   } catch(e) {
     console.error("Error saving categories to localStorage", e);
   }
@@ -239,6 +240,7 @@ function loadCatalogData() {
 function saveCatalogData() {
   try {
     localStorage.setItem(RBSTORE_CONFIG.storageKey, JSON.stringify(products));
+    autoSyncToCloud();
   } catch(e) {
     console.error("Error saving catalog to localStorage", e);
     showToast("Advertencia: No se pudo guardar en almacenamiento local");
@@ -1125,3 +1127,115 @@ window.exportCatalogData = exportCatalogData;
 window.triggerImportCatalog = triggerImportCatalog;
 window.handleImportCatalogFile = handleImportCatalogFile;
 window.copyCatalogJSONToClipboard = copyCatalogJSONToClipboard;
+
+// ═══════════════════════════════════════════════
+// AUTO-SYNC TO GITHUB PAGES CLOUD
+// ═══════════════════════════════════════════════
+function toggleAutoSyncConfig() {
+  const container = document.getElementById("adminAutoSyncContainer");
+  if (!container) return;
+  const isHidden = container.style.display === "none";
+  container.style.display = isHidden ? "block" : "none";
+  
+  if (isHidden) {
+    updateAutoSyncStatusUI();
+  }
+}
+
+function saveGitHubToken() {
+  const input = document.getElementById("ghTokenInput");
+  if (!input || !input.value.trim()) {
+    showToast("Ingresa un Token válido de GitHub");
+    return;
+  }
+  const token = input.value.trim();
+  localStorage.setItem("rbstore_gh_token", token);
+  showToast("Token de GitHub guardado ✓");
+  updateAutoSyncStatusUI();
+  autoSyncToCloud(true);
+}
+
+function removeGitHubToken() {
+  localStorage.removeItem("rbstore_gh_token");
+  const input = document.getElementById("ghTokenInput");
+  if (input) input.value = "";
+  showToast("Token de GitHub eliminado");
+  updateAutoSyncStatusUI();
+}
+
+function updateAutoSyncStatusUI() {
+  const statusDiv = document.getElementById("autoSyncStatusMsg");
+  const token = localStorage.getItem("rbstore_gh_token");
+  if (!statusDiv) return;
+  
+  if (token) {
+    const hidden = "ghp_••••" + token.slice(-4);
+    statusDiv.innerHTML = `<span style="color: #4ade80; font-weight: bold;">● Sincronización Automática ACTIVA (${hidden})</span> — Cada cambio que hagas se publicará inmediatamente para todos los usuarios.`;
+  } else {
+    statusDiv.innerHTML = `<span style="color: #f87171; font-weight: bold;">○ Sin conectar</span> — Pega tu GitHub Personal Access Token (con permisos de <code>repo</code>) para activar la sincronización automática en vivo.`;
+  }
+}
+
+async function autoSyncToCloud(forceNotify = false) {
+  const token = localStorage.getItem("rbstore_gh_token");
+  if (!token) return;
+
+  try {
+    const repoOwner = "joaquincf912-beep";
+    const repoName = "rbstore-catalog";
+    const filePath = "catalog.json";
+    const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
+
+    const getRes = await fetch(apiUrl, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json"
+      }
+    });
+
+    if (!getRes.ok) {
+      console.error("Error obteniendo SHA de catalog.json en GitHub", await getRes.text());
+      if (forceNotify) showToast("❌ Token inválido o sin permisos para el repositorio");
+      return;
+    }
+
+    const fileData = await getRes.json();
+    const sha = fileData.sha;
+
+    const catalogObj = {
+      categories: categories,
+      products: products,
+      exportedAt: new Date().toISOString()
+    };
+
+    const jsonString = JSON.stringify(catalogObj, null, 2);
+    const base64Content = btoa(unescape(encodeURIComponent(jsonString)));
+
+    const putRes = await fetch(apiUrl, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: "auto-update catalog from owner admin panel",
+        content: base64Content,
+        sha: sha
+      })
+    });
+
+    if (putRes.ok) {
+      showToast("⚡ ¡Cambios sincronizados en vivo para todos!");
+    } else {
+      console.error("Error guardando en GitHub", await putRes.text());
+      if (forceNotify) showToast("⚠️ Error actualizando catálogo en GitHub");
+    }
+  } catch(err) {
+    console.error("Error en autoSyncToCloud", err);
+  }
+}
+
+window.toggleAutoSyncConfig = toggleAutoSyncConfig;
+window.saveGitHubToken = saveGitHubToken;
+window.removeGitHubToken = removeGitHubToken;
