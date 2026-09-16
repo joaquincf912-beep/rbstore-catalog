@@ -9,7 +9,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="style.css?v=31.0">
+  <link rel="stylesheet" href="style.css?v=32.0">
 </head>
 <body>
 
@@ -22,7 +22,7 @@
   <header class="header" id="header">
     <div class="container">
       <a href="#" class="header__logo">
-        <img src="assets/rbstore-logo.png?v=31.0" alt="RBstore Logo">
+        <img src="assets/rbstore-logo.png?v=32.0" alt="RBstore Logo">
         <span>RB<span class="accent-text">store</span></span>
       </a>
 
@@ -94,43 +94,7 @@
       <h2 class="section-title">Categorías</h2>
       <p class="section-subtitle">Explora nuestros productos por categoría</p>
 
-      <div class="categories__grid">
-        <div class="cat-card active" data-category="todos">
-          <div class="cat-card__icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          </div>
-          <div class="cat-card__name">Todos</div>
-          <div class="cat-card__count">10 productos</div>
-        </div>
-        <div class="cat-card" data-category="cargadores">
-          <div class="cat-card__icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          </div>
-          <div class="cat-card__name">Cargadores & Cables</div>
-          <div class="cat-card__count">5 productos</div>
-        </div>
-        <div class="cat-card" data-category="iluminacion">
-          <div class="cat-card__icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1.3.5 2.6 1.5 3.5.8.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
-          </div>
-          <div class="cat-card__name">Iluminación LED</div>
-          <div class="cat-card__count">2 productos</div>
-        </div>
-        <div class="cat-card" data-category="audifonos">
-          <div class="cat-card__icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
-          </div>
-          <div class="cat-card__name">Audífonos</div>
-          <div class="cat-card__count">2 productos</div>
-        </div>
-        <div class="cat-card" data-category="varios">
-          <div class="cat-card__icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-          </div>
-          <div class="cat-card__name">Artículos Varios</div>
-          <div class="cat-card__count">1 producto</div>
-        </div>
-      </div>
+      <div class="categories__grid" id="categoriesGrid"></div>
     </div>
   </section>
 
@@ -333,9 +297,25 @@
       <!-- Dashboard View -->
       <div id="adminDashboardView" style="display: none;">
         <h2 class="modal-title" style="margin-bottom: 20px;">Gestión del Catálogo</h2>
-        <div class="admin-toolbar">
+        <div class="admin-toolbar" style="gap: 10px; flex-wrap: wrap;">
           <button id="btnShowAddProduct" class="btn btn--primary">+ Agregar Producto</button>
+          <button id="btnToggleCategoryForm" class="btn btn--secondary" onclick="toggleAddCategoryForm()" style="background: rgba(61, 139, 253, 0.15); color: var(--accent-bright); border: 1px solid var(--border-accent);">+ Nueva Categoría</button>
           <button id="btnResetDefaultCatalog" class="btn btn--outline">Restablecer</button>
+        </div>
+
+        <!-- Add Category Form (hidden by default) -->
+        <div id="adminCategoryFormContainer" style="display: none; background: var(--bg-card); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-accent); margin-top: 16px; margin-bottom: 20px;">
+          <h4 style="margin-bottom: 12px; font-size: 0.95rem; color: var(--accent-bright);">Crear Nueva Categoría</h4>
+          <form id="categoryForm" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;" onsubmit="handleCategoryFormSubmit(event)">
+            <input type="text" id="newCatName" placeholder="Nombre (ej: Smartwatches)" required class="admin-input" style="flex: 2; min-width: 150px;">
+            <input type="text" id="newCatIcon" placeholder="Icono/Emoji (ej: ⌚)" class="admin-input" style="flex: 1; max-width: 110px; text-align: center;">
+            <button type="submit" class="btn btn--primary" style="padding: 10px 16px;">Guardar</button>
+            <button type="button" class="btn btn--outline" onclick="toggleAddCategoryForm()" style="padding: 10px 12px;">Cancelar</button>
+          </form>
+          <div style="margin-top: 14px;">
+            <label style="display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px;">Categorías actuales:</label>
+            <div id="adminCategoriesList" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+          </div>
         </div>
 
         <!-- Add/Edit Form (hidden by default) -->
@@ -344,12 +324,7 @@
           <input type="hidden" id="editProductId">
           <form id="productForm" class="admin-form">
             <input type="text" id="prodName" placeholder="Nombre del producto" required class="admin-input">
-            <select id="prodSector" class="admin-input" required>
-              <option value="cargadores">Cargadores & Cables</option>
-              <option value="iluminacion">Iluminación LED</option>
-              <option value="audifonos">Audífonos</option>
-              <option value="varios">Artículos Varios</option>
-            </select>
+            <select id="prodSector" class="admin-input" required></select>
             <input type="number" id="prodPrice" placeholder="Precio ($)" step="0.01" required class="admin-input">
             <input type="number" id="prodOldPrice" placeholder="Precio anterior ($)" step="0.01" class="admin-input">
             <select id="prodBadge" class="admin-input">
@@ -406,6 +381,6 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
   </button>
 
-  <script src="app.js?v=31.0"></script>
+  <script src="app.js?v=32.0"></script>
 </body>
 </html>

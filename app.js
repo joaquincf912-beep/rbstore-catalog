@@ -112,8 +112,17 @@ const DEFAULT_PRODUCTS = [
   }
 ];
 
+// DEFAULT CATEGORIES
+const DEFAULT_CATEGORIES = [
+  { id: "cargadores", name: "Cargadores & Cables", icon: "⚡" },
+  { id: "iluminacion", name: "Iluminación LED", icon: "💡" },
+  { id: "audifonos", name: "Audífonos", icon: "🎧" },
+  { id: "varios", name: "Artículos Varios", icon: "📦" }
+];
+
 // STATE MANAGEMENT
 let products = [];
+let categories = [];
 let currentFilterSector = "todos";
 let currentSearchTerm = "";
 let selectedProduct = null;
@@ -126,18 +135,43 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function initApp() {
+  loadCategoriesData();
   loadCatalogData();
+  renderCategoriesGrid();
+  renderSectorOptions();
   renderProductsGrid();
   setupEventListeners();
   setupScrollEffects();
   updateStats();
   
-  console.log(`[RBstore] Catálogo cargado: ${products.length} productos`);
+  console.log(`[RBstore] Catálogo cargado: ${products.length} productos, ${categories.length} categorías`);
+}
+
+// LOAD CATEGORIES DATA
+function loadCategoriesData() {
+  const saved = localStorage.getItem("rbstore_categories_v2");
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        categories = parsed;
+      } else {
+        categories = [...DEFAULT_CATEGORIES];
+      }
+    } catch(e) {
+      categories = [...DEFAULT_CATEGORIES];
+    }
+  } else {
+    categories = [...DEFAULT_CATEGORIES];
+  }
+}
+
+function saveCategoriesData() {
+  localStorage.setItem("rbstore_categories_v2", JSON.stringify(categories));
 }
 
 // LOAD CATALOG DATA FROM STORAGE OR DEFAULTS
 function loadCatalogData() {
-  // Clean up legacy storage keys
   try {
     localStorage.removeItem("rbstore_custom_products");
     localStorage.removeItem("rbstore_custom_products_v2");
@@ -168,6 +202,74 @@ function loadCatalogData() {
 
 function saveCatalogData() {
   localStorage.setItem(RBSTORE_CONFIG.storageKey, JSON.stringify(products));
+}
+
+// DYNAMIC CATEGORIES GRID RENDERER
+function renderCategoriesGrid() {
+  const grid = document.getElementById("categoriesGrid");
+  if (!grid) return;
+
+  grid.innerHTML = "";
+
+  // 1. "Todos" Card
+  const todosCard = document.createElement("button");
+  todosCard.className = `cat-card ${currentFilterSector === 'todos' ? 'active' : ''}`;
+  todosCard.setAttribute("data-category", "todos");
+  todosCard.innerHTML = `
+    <div class="cat-card__icon">🔥</div>
+    <div class="cat-card__name">Todos</div>
+    <div class="cat-card__count">${products.length} productos</div>
+  `;
+  todosCard.addEventListener("click", () => handleCategoryClick("todos", todosCard));
+  grid.appendChild(todosCard);
+
+  // 2. Render each Category
+  categories.forEach(cat => {
+    const count = products.filter(p => p.sector === cat.id).length;
+    const card = document.createElement("button");
+    card.className = `cat-card ${currentFilterSector === cat.id ? 'active' : ''}`;
+    card.setAttribute("data-category", cat.id);
+    card.innerHTML = `
+      <div class="cat-card__icon">${cat.icon || '📦'}</div>
+      <div class="cat-card__name">${cat.name}</div>
+      <div class="cat-card__count">${count} productos</div>
+    `;
+    card.addEventListener("click", () => handleCategoryClick(cat.id, card));
+    grid.appendChild(card);
+  });
+}
+
+function handleCategoryClick(sectorId, cardElement) {
+  const grid = document.getElementById("categoriesGrid");
+  if (grid) {
+    grid.querySelectorAll(".cat-card").forEach(c => c.classList.remove("active"));
+  }
+  cardElement.classList.add("active");
+  currentFilterSector = sectorId;
+  renderProductsGrid();
+
+  const prodSection = document.getElementById("catalogo");
+  if (prodSection) prodSection.scrollIntoView({ behavior: "smooth" });
+}
+
+// DYNAMIC SECTOR SELECTOR FOR ADD/EDIT FORM
+function renderSectorOptions() {
+  const select = document.getElementById("prodSector");
+  if (!select) return;
+
+  const currentVal = select.value;
+  select.innerHTML = "";
+
+  categories.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat.id;
+    option.textContent = `${cat.icon || '📦'} ${cat.name}`;
+    select.appendChild(option);
+  });
+
+  if (currentVal && categories.some(c => c.id === currentVal)) {
+    select.value = currentVal;
+  }
 }
 
 // ═══════════════════════════════════════════════
@@ -255,6 +357,9 @@ function createProductCard(product, index) {
 
 // SECTOR UTILITY
 function getSectorLabel(sectorKey) {
+  const cat = categories.find(c => c.id === sectorKey);
+  if (cat) return cat.name;
+
   const map = {
     cargadores: "Cargadores & Cables",
     iluminacion: "Iluminación LED",
@@ -291,20 +396,7 @@ function setupEventListeners() {
     if (navCta) navCta.addEventListener("click", closeNav);
   }
 
-  // Category Cards Filter
-  const categoryCards = document.querySelectorAll(".cat-card");
-  categoryCards.forEach(card => {
-    card.addEventListener("click", () => {
-      categoryCards.forEach(c => c.classList.remove("active"));
-      card.classList.add("active");
-      
-      currentFilterSector = card.getAttribute("data-category") || "todos";
-      renderProductsGrid();
 
-      const prodSection = document.getElementById("catalogo");
-      if (prodSection) prodSection.scrollIntoView({ behavior: "smooth" });
-    });
-  });
 
   // Search Input
   const searchInput = document.getElementById("searchInput");
@@ -562,6 +654,7 @@ function renderAdminProductsTable() {
 }
 
 function showAddProductForm() {
+  renderSectorOptions();
   const container = document.getElementById("adminFormContainer");
   const form = document.getElementById("productForm");
   document.getElementById("formTitle").innerText = "Agregar Nuevo Producto";
@@ -578,6 +671,7 @@ function editProduct(productId) {
   const p = products.find(item => item.id === productId);
   if (!p) return;
 
+  renderSectorOptions();
   showAddProductForm();
   document.getElementById("formTitle").innerText = `Editar Producto #${p.id}`;
   document.getElementById("editProductId").value = p.id;
@@ -647,13 +741,105 @@ function deleteProduct(productId) {
 }
 
 function resetDefaultCatalog() {
-  if (confirm("¿Deseas restablecer el catálogo a los productos iniciales de RBstore?")) {
+  if (confirm("¿Deseas restablecer el catálogo a los productos y categorías iniciales de RBstore?")) {
     products = [...DEFAULT_PRODUCTS];
+    categories = [...DEFAULT_CATEGORIES];
     saveCatalogData();
+    saveCategoriesData();
+    currentFilterSector = "todos";
+    renderCategoriesGrid();
+    renderSectorOptions();
     renderProductsGrid();
     renderAdminProductsTable();
     updateStats();
     showToast("Catálogo restablecido por defecto");
+  }
+}
+
+// ═══════════════════════════════════════════════
+// CATEGORY MANAGEMENT FOR OWNER ADMIN PANEL
+// ═══════════════════════════════════════════════
+function toggleAddCategoryForm() {
+  const container = document.getElementById("adminCategoryFormContainer");
+  if (!container) return;
+  const isHidden = container.style.display === "none";
+  container.style.display = isHidden ? "block" : "none";
+  if (isHidden) {
+    renderAdminCategoriesList();
+  }
+}
+
+function handleCategoryFormSubmit(e) {
+  e.preventDefault();
+  const nameInput = document.getElementById("newCatName");
+  const iconInput = document.getElementById("newCatIcon");
+  if (!nameInput) return;
+
+  const name = nameInput.value.trim();
+  if (!name) return;
+
+  const icon = iconInput ? (iconInput.value.trim() || "📦") : "📦";
+  const id = name.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "_")
+    .replace(/_+/g, "_");
+
+  if (categories.some(c => c.id === id)) {
+    showToast("Esta categoría ya existe");
+    return;
+  }
+
+  categories.push({ id, name, icon });
+  saveCategoriesData();
+
+  renderCategoriesGrid();
+  renderSectorOptions();
+  renderAdminCategoriesList();
+
+  nameInput.value = "";
+  if (iconInput) iconInput.value = "";
+  showToast(`Categoría "${name}" creada con éxito!`);
+}
+
+function renderAdminCategoriesList() {
+  const container = document.getElementById("adminCategoriesList");
+  if (!container) return;
+
+  let html = "";
+  categories.forEach(cat => {
+    const isDefault = ["cargadores", "iluminacion", "audifonos", "varios"].includes(cat.id);
+    html += `
+      <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 50px; font-size: 0.8rem; color: var(--text-primary);">
+        <span>${cat.icon || '📦'} ${cat.name}</span>
+        ${!isDefault ? `<button onclick="deleteCategory('${cat.id}')" title="Eliminar categoría" style="background:none; border:none; color: #ef4444; font-weight: bold; cursor: pointer; padding: 0 4px; font-size: 0.95rem; line-height:1;">&times;</button>` : ''}
+      </span>
+    `;
+  });
+  container.innerHTML = html;
+}
+
+function deleteCategory(catId) {
+  const cat = categories.find(c => c.id === catId);
+  if (!cat) return;
+
+  if (confirm(`¿Seguro que deseas eliminar la categoría "${cat.name}"? Los productos asignados a ella pasarán a "Artículos Varios".`)) {
+    categories = categories.filter(c => c.id !== catId);
+    
+    // Re-assign products to 'varios'
+    products.forEach(p => {
+      if (p.sector === catId) p.sector = "varios";
+    });
+
+    saveCategoriesData();
+    saveCatalogData();
+
+    renderCategoriesGrid();
+    renderSectorOptions();
+    renderAdminCategoriesList();
+    renderProductsGrid();
+    renderAdminProductsTable();
+
+    showToast(`Categoría "${cat.name}" eliminada`);
   }
 }
 
