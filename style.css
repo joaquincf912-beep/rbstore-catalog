@@ -37,7 +37,29 @@
 }
 
 /* ── Reset ───────────────────────────────────────────────── */
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent !important;
+  outline: none !important;
+}
+
+*:focus, *:focus-visible, *:focus-within, *:active {
+  outline: none !important;
+  box-shadow: none;
+}
+
+.product-card,
+.product-card__img,
+.product-card__img img,
+.cat-card,
+a, button {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  outline: none !important;
+}
 
 html {
   scroll-behavior: smooth;
@@ -465,9 +487,12 @@ button { cursor: pointer; font: inherit; border: none; background: none; }
   transform: scale3d(1.04, 1.04, 1) translate3d(0, 0, 0);
 }
 .product-card__img-overlay {
-  position: absolute; inset: 0;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: -1px;
   background: linear-gradient(to top, var(--bg-card) 0%, transparent 40%);
   pointer-events: none;
+  outline: none !important;
+  border: none !important;
 }
 
 /* Quick Action Buttons */
