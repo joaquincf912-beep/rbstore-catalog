@@ -146,15 +146,24 @@ button { cursor: pointer; font: inherit; border: none; background: none; }
   display: flex;
   align-items: center;
   gap: 12px;
+  text-decoration: none;
+  color: var(--text-primary);
 }
 .header__logo img {
-  height: 44px;
+  height: 42px;
   width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(61, 139, 253, 0.45));
+  transition: transform .3s ease, filter .3s ease;
+}
+.header__logo:hover img {
+  transform: scale(1.06);
+  filter: drop-shadow(0 0 16px rgba(61, 139, 253, 0.75));
 }
 .header__logo span {
   font-family: 'Outfit', sans-serif;
-  font-weight: 700;
-  font-size: 1.4rem;
+  font-weight: 800;
+  font-size: 1.45rem;
   letter-spacing: -.02em;
 }
 
