@@ -9,7 +9,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="style.css?v=34.0">
+  <link rel="stylesheet" href="style.css?v=35.0">
 </head>
 <body>
 
@@ -22,7 +22,7 @@
   <header class="header" id="header">
     <div class="container">
       <a href="#" class="header__logo">
-        <img src="assets/rbstore-logo.png?v=34.0" alt="RBstore Logo">
+        <img src="assets/rbstore-logo.png?v=35.0" alt="RBstore Logo">
         <span>RB<span class="accent-text">store</span></span>
       </a>
 
@@ -299,18 +299,18 @@
         <h2 class="modal-title" style="margin-bottom: 20px;">Gestión del Catálogo</h2>
         <div class="admin-toolbar" style="gap: 10px; flex-wrap: wrap;">
           <button id="btnShowAddProduct" class="btn btn--primary">+ Agregar Producto</button>
-          <button id="btnToggleCategoryForm" class="btn btn--secondary" onclick="toggleAddCategoryForm()" style="background: rgba(61, 139, 253, 0.15); color: var(--accent-bright); border: 1px solid var(--border-accent);">+ Nueva Categoría</button>
+          <button id="btnToggleCategoryForm" class="btn btn--secondary" style="background: rgba(61, 139, 253, 0.15); color: var(--accent-bright); border: 1px solid var(--border-accent);">+ Nueva Categoría</button>
           <button id="btnResetDefaultCatalog" class="btn btn--outline">Restablecer</button>
         </div>
 
         <!-- Add Category Form (hidden by default) -->
         <div id="adminCategoryFormContainer" style="display: none; background: var(--bg-card); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-accent); margin-top: 16px; margin-bottom: 20px;">
           <h4 style="margin-bottom: 12px; font-size: 0.95rem; color: var(--accent-bright);">Crear Nueva Categoría</h4>
-          <form id="categoryForm" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;" onsubmit="handleCategoryFormSubmit(event)">
+          <form id="categoryForm" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
             <input type="text" id="newCatName" placeholder="Nombre (ej: Smartwatches)" required class="admin-input" style="flex: 2; min-width: 150px;">
             <input type="text" id="newCatIcon" placeholder="Icono/Emoji (ej: ⌚)" class="admin-input" style="flex: 1; max-width: 110px; text-align: center;">
             <button type="submit" class="btn btn--primary" style="padding: 10px 16px;">Guardar</button>
-            <button type="button" class="btn btn--outline" onclick="toggleAddCategoryForm()" style="padding: 10px 12px;">Cancelar</button>
+            <button type="button" class="btn btn--outline" onclick="document.getElementById('adminCategoryFormContainer').style.display='none'" style="padding: 10px 12px;">Cancelar</button>
           </form>
           <div style="margin-top: 14px;">
             <label style="display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px;">Categorías actuales:</label>
@@ -381,6 +381,6 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
   </button>
 
-  <script src="app.js?v=34.0"></script>
+  <script src="app.js?v=35.0"></script>
 </body>
 </html>

@@ -809,11 +809,10 @@ function renderAdminCategoriesList() {
 
   let html = "";
   categories.forEach(cat => {
-    const isDefault = ["cargadores", "iluminacion", "audifonos", "varios"].includes(cat.id);
     html += `
       <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 50px; font-size: 0.8rem; color: var(--text-primary);">
         <span>${cat.icon || '📦'} ${cat.name}</span>
-        ${!isDefault ? `<button onclick="deleteCategory('${cat.id}')" title="Eliminar categoría" style="background:none; border:none; color: #ef4444; font-weight: bold; cursor: pointer; padding: 0 4px; font-size: 0.95rem; line-height:1;">&times;</button>` : ''}
+        <button onclick="deleteCategory('${cat.id}')" title="Eliminar categoría" style="background:none; border:none; color: #ef4444; font-weight: bold; cursor: pointer; padding: 0 4px; font-size: 0.95rem; line-height:1;">&times;</button>
       </span>
     `;
   });
@@ -824,12 +823,18 @@ function deleteCategory(catId) {
   const cat = categories.find(c => c.id === catId);
   if (!cat) return;
 
-  if (confirm(`¿Seguro que deseas eliminar la categoría "${cat.name}"? Los productos asignados a ella pasarán a "Artículos Varios".`)) {
+  if (categories.length <= 1) {
+    showToast("No puedes eliminar la última categoría");
+    return;
+  }
+
+  if (confirm(`¿Seguro que deseas eliminar la categoría "${cat.name}"? Los productos asignados serán reasignados.`)) {
     categories = categories.filter(c => c.id !== catId);
     
-    // Re-assign products to 'varios'
+    // Re-assign products to the first remaining category
+    const fallbackId = categories[0].id;
     products.forEach(p => {
-      if (p.sector === catId) p.sector = "varios";
+      if (p.sector === catId) p.sector = fallbackId;
     });
 
     saveCategoriesData();
