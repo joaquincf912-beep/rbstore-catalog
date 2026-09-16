@@ -134,7 +134,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initApp();
 });
 
-function initApp() {
+async function initApp() {
+  await loadRemoteCatalogData();
   loadCategoriesData();
   loadCatalogData();
   renderCategoriesGrid();
@@ -145,6 +146,37 @@ function initApp() {
   updateStats();
   
   console.log(`[RBstore] Catálogo cargado: ${products.length} productos, ${categories.length} categorías`);
+}
+
+// FETCH REMOTE CATALOG.JSON (Single source of truth for all visitors)
+async function loadRemoteCatalogData() {
+  try {
+    const res = await fetch(`catalog.json?v=${Date.now()}`);
+    if (res.ok) {
+      const data = await res.json();
+      
+      // catalog.json ALWAYS overrides for all visitors
+      // This ensures owner changes propagate to everyone
+      if (data.products && Array.isArray(data.products) && data.products.length > 0) {
+        products = data.products;
+        // Update localStorage so it's in sync
+        localStorage.setItem(RBSTORE_CONFIG.storageKey, JSON.stringify(products));
+        // Also update defaults
+        DEFAULT_PRODUCTS.length = 0;
+        DEFAULT_PRODUCTS.push(...data.products);
+      }
+      if (data.categories && Array.isArray(data.categories) && data.categories.length > 0) {
+        categories = data.categories;
+        localStorage.setItem("rbstore_categories_v2", JSON.stringify(categories));
+        DEFAULT_CATEGORIES.length = 0;
+        DEFAULT_CATEGORIES.push(...data.categories);
+      }
+      
+      console.log(`[RBstore] Catálogo remoto sincronizado: ${products.length} productos, ${categories.length} categorías`);
+    }
+  } catch(e) {
+    console.log("[RBstore] Usando catálogo local predeterminado");
+  }
 }
 
 // LOAD CATEGORIES DATA
@@ -984,3 +1016,112 @@ window.hideProductForm = hideProductForm;
 window.editProduct = editProduct;
 window.deleteProduct = deleteProduct;
 window.handleImageFileUpload = handleImageFileUpload;
+
+// ═══════════════════════════════════════════════
+// CATALOG EXPORT / IMPORT / COPY FUNCTIONS
+// ═══════════════════════════════════════════════
+
+// Export: downloads current catalog as a JSON file
+function exportCatalogData() {
+  const data = {
+    categories: categories,
+    products: products,
+    exportedAt: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `rbstore_catalog_${Date.now()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast("Catálogo exportado como archivo JSON");
+}
+
+// Import: triggers file picker
+function triggerImportCatalog() {
+  document.getElementById("importFileInput").click();
+}
+
+// Import: reads uploaded JSON file and applies it
+function handleImportCatalogFile(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+
+      if (data.products && Array.isArray(data.products) && data.products.length > 0) {
+        products = data.products;
+        saveCatalogData();
+      }
+      if (data.categories && Array.isArray(data.categories) && data.categories.length > 0) {
+        categories = data.categories;
+        saveCategoriesData();
+      }
+
+      renderCategoriesGrid();
+      renderSectorOptions();
+      renderProductsGrid();
+      renderAdminProductsTable();
+      updateStats();
+      showToast(`Catálogo importado: ${products.length} productos, ${categories.length} categorías`);
+    } catch(err) {
+      showToast("Error: El archivo no es un JSON válido de catálogo");
+      console.error("Import error:", err);
+    }
+  };
+  reader.readAsText(file);
+  input.value = ""; // reset so same file can be re-imported
+}
+
+// Copy: copies current catalog JSON to clipboard (for updating catalog.json in GitHub)
+function copyCatalogJSONToClipboard() {
+  const data = {
+    categories: categories,
+    products: products.map(p => {
+      // Strip base64 images from clipboard copy to keep it manageable
+      const clean = { ...p };
+      if (clean.image && clean.image.startsWith("data:")) {
+        clean.image = "images/" + clean.name.toLowerCase().replace(/[^a-z0-9]/g, "_") + ".jpg";
+      }
+      return clean;
+    }),
+    exportedAt: new Date().toISOString()
+  };
+  const jsonStr = JSON.stringify(data, null, 2);
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(jsonStr).then(() => {
+      showToast("Datos del catálogo copiados al portapapeles ✓");
+    }).catch(() => {
+      fallbackCopyToClipboard(jsonStr);
+    });
+  } else {
+    fallbackCopyToClipboard(jsonStr);
+  }
+}
+
+function fallbackCopyToClipboard(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand("copy");
+    showToast("Datos del catálogo copiados al portapapeles ✓");
+  } catch(err) {
+    showToast("No se pudo copiar. Usa Exportar en su lugar.");
+  }
+  document.body.removeChild(ta);
+}
+
+window.exportCatalogData = exportCatalogData;
+window.triggerImportCatalog = triggerImportCatalog;
+window.handleImportCatalogFile = handleImportCatalogFile;
+window.copyCatalogJSONToClipboard = copyCatalogJSONToClipboard;

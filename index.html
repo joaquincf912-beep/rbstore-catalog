@@ -9,7 +9,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="style.css?v=37.0">
+  <link rel="stylesheet" href="style.css?v=38.0">
 </head>
 <body>
 
@@ -300,7 +300,11 @@
         <div class="admin-toolbar" style="gap: 10px; flex-wrap: wrap;">
           <button id="btnShowAddProduct" class="btn btn--primary">+ Agregar Producto</button>
           <button id="btnToggleCategoryForm" class="btn btn--secondary" style="background: rgba(61, 139, 253, 0.15); color: var(--accent-bright); border: 1px solid var(--border-accent);">+ Nueva Categoría</button>
-          <button id="btnResetDefaultCatalog" class="btn btn--outline">Restablecer</button>
+          <button id="btnExportCatalog" class="btn btn--outline" onclick="exportCatalogData()" title="Descargar copia de respaldo en JSON">📥 Exportar</button>
+          <button id="btnImportCatalog" class="btn btn--outline" onclick="triggerImportCatalog()" title="Cargar catálogo desde archivo JSON">📤 Importar</button>
+          <button id="btnCopyCatalogCode" class="btn btn--outline" onclick="copyCatalogJSONToClipboard()" title="Copiar datos para actualizar web pública">📋 Copiar Datos</button>
+          <button id="btnResetDefaultCatalog" class="btn btn--outline" style="color: #ef4444; border-color: rgba(239,68,68,0.3);">Restablecer</button>
+          <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportCatalogFile(this)">
         </div>
 
         <!-- Add Category Form (hidden by default) -->
@@ -383,6 +387,6 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
   </button>
 
-  <script src="app.js?v=37.0"></script>
+  <script src="app.js?v=38.0"></script>
 </body>
 </html>
