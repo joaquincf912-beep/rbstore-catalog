@@ -1246,3 +1246,50 @@ async function autoSyncToCloud(forceNotify = false) {
 window.toggleAutoSyncConfig = toggleAutoSyncConfig;
 window.saveGitHubToken = saveGitHubToken;
 window.removeGitHubToken = removeGitHubToken;
+
+// RECOVER LOST DRAFTS FROM BROWSER LOCALSTORAGE
+function recoverLostProducts() {
+  const foundLists = [];
+  
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      try {
+        const val = localStorage.getItem(key);
+        if (!val) continue;
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].name && parsed[0].price) {
+          foundLists.push({ key: key, count: parsed.length, products: parsed });
+        } else if (parsed && parsed.products && Array.isArray(parsed.products) && parsed.products.length > 0) {
+          foundLists.push({ key: key, count: parsed.products.length, products: parsed.products });
+        }
+      } catch(e) {}
+    }
+  } catch(err) {
+    console.error("Error scanning localStorage", err);
+  }
+  
+  if (foundLists.length === 0) {
+    showToast("No se encontraron borradores antiguos en este celular.");
+    return;
+  }
+  
+  // Pick the list with most products or offer to merge
+  let best = foundLists[0];
+  foundLists.forEach(item => {
+    if (item.count > best.count) best = item;
+  });
+  
+  products = best.products;
+  saveCatalogData();
+  renderCategoriesGrid();
+  renderSectorOptions();
+  renderProductsGrid();
+  renderAdminProductsTable();
+  updateStats();
+  
+  showToast(`¡Se recuperaron ${products.length} productos desde la memoria local (${best.key})!`);
+}
+
+window.recoverLostProducts = recoverLostProducts;
