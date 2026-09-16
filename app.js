@@ -811,50 +811,43 @@ function editProduct(productId) {
   document.getElementById("adminFormContainer").scrollIntoView({ behavior: "smooth" });
 }
 
-function handleImageFileUpload(input) {
+const IMGBB_API_KEY = "40941cfd13eaee31c9fa00c3b9dd2d52";
+
+async function uploadImageToImgBB(file) {
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+  if (data.success && data.data && data.data.url) {
+    return data.data.url;
+  } else {
+    throw new Error(data.error ? data.error.message : "Error al subir imagen a ImgBB");
+  }
+}
+
+async function handleImageFileUpload(input) {
   if (input.files && input.files[0]) {
     const file = input.files[0];
-    showToast("Procesando y optimizando imagen...");
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const img = new Image();
-      img.onload = function() {
-        try {
-          const canvas = document.createElement("canvas");
-          const MAX_SIZE = 800;
-          let width = img.width;
-          let height = img.height;
-
-          if (width > height) {
-            if (width > MAX_SIZE) {
-              height *= MAX_SIZE / width;
-              width = MAX_SIZE;
-            }
-          } else {
-            if (height > MAX_SIZE) {
-              width *= MAX_SIZE / height;
-              height = MAX_SIZE;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, width, height);
-
-          // Compress to lightweight JPEG Base64
-          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.80);
-          document.getElementById("prodImage").value = compressedDataUrl;
-          showToast("Foto optimizada y cargada instantáneamente");
-        } catch(err) {
-          document.getElementById("prodImage").value = e.target.result;
-          showToast("Foto cargada con éxito");
-        }
+    showToast("📤 Subiendo foto a servidor gratuito de ImgBB...");
+    try {
+      const url = await uploadImageToImgBB(file);
+      document.getElementById("prodImage").value = url;
+      showToast("✅ Imagen alojada exitosamente en ImgBB");
+    } catch(err) {
+      console.error("Error ImgBB:", err);
+      showToast("⚠️ Falló subida a ImgBB, optimizando localmente...");
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById("prodImage").value = e.target.result;
       };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
+    }
   }
 }
 
@@ -866,17 +859,16 @@ async function handleProductFormSubmit(e) {
 
   let imageUrl = document.getElementById("prodImage").value.trim();
 
-  // Upload file to Firebase Storage if selected
-  if (file) {
+  // Upload file to ImgBB if selected and not yet uploaded
+  if (file && (!imageUrl || !imageUrl.startsWith("http"))) {
     try {
-      showToast("📤 Subiendo foto a Firebase Storage...");
-      const storageRef = ref(storage, `productos/${Date.now()}_${file.name}`);
-      const snap = await uploadBytes(storageRef, file);
-      imageUrl = await getDownloadURL(snap.ref);
-      showToast("✅ Imagen subida exitosamente a Firebase Storage");
+      showToast("📤 Subiendo foto a ImgBB...");
+      imageUrl = await uploadImageToImgBB(file);
+      document.getElementById("prodImage").value = imageUrl;
+      showToast("✅ Imagen alojada gratuitamente en ImgBB");
     } catch(err) {
-      console.error("Error subiendo a Storage:", err);
-      showToast("⚠️ Usando imagen local: " + err.message);
+      console.error("Error subiendo a ImgBB:", err);
+      showToast("⚠️ Usando imagen actual: " + err.message);
     }
   }
 
