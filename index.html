@@ -300,8 +300,8 @@
         <div class="admin-toolbar" style="gap: 10px; flex-wrap: wrap;">
           <button id="btnShowAddProduct" class="btn btn--primary">+ Agregar Producto</button>
           <button id="btnToggleCategoryForm" class="btn btn--secondary" style="background: rgba(61, 139, 253, 0.15); color: var(--accent-bright); border: 1px solid var(--border-accent);">+ Nueva Categoría</button>
+          <button id="btnSeedFirestore" class="btn btn--outline" onclick="seedInitialDataToFirestore()" style="color: #f97316; border-color: rgba(249,115,22,0.3);" title="Subir catálogo inicial a Cloud Firestore">🔥 Sembrar en Firestore</button>
           <button id="btnRecoverLostProducts" class="btn btn--outline" onclick="recoverLostProducts()" style="color: #a855f7; border-color: rgba(168,85,247,0.3);" title="Escanear memoria del navegador para buscar borradores anteriores">🔍 Recuperar Borradores</button>
-          <button id="btnToggleAutoSyncConfig" class="btn btn--outline" onclick="toggleAutoSyncConfig()" style="color: #38bdf8; border-color: rgba(56,189,248,0.3);" title="Configurar Sincronización Automática">⚡ Auto-Sincronización</button>
           <button id="btnExportCatalog" class="btn btn--outline" onclick="exportCatalogData()" title="Descargar copia de respaldo en JSON">📥 Exportar</button>
           <button id="btnImportCatalog" class="btn btn--outline" onclick="triggerImportCatalog()" title="Cargar catálogo desde archivo JSON">📤 Importar</button>
           <button id="btnCopyCatalogCode" class="btn btn--outline" onclick="copyCatalogJSONToClipboard()" title="Copiar datos para actualizar web pública">📋 Copiar Datos</button>
@@ -403,6 +403,6 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
   </button>
 
-  <script src="app.js?v=48.0"></script>
+  <script type="module" src="app.js?v=49.0"></script>
 </body>
 </html>

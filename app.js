@@ -1,6 +1,13 @@
 /* ==========================================================================
-   RBSTORE — CATALOG & INTERACTIVE LOGIC
+   RBSTORE — CATALOG & INTERACTIVE LOGIC (FIREBASE V10 INTEGRATED)
    ========================================================================== */
+
+import { 
+  db, storage, auth,
+  collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy,
+  ref, uploadBytes, getDownloadURL,
+  signInWithEmailAndPassword, signOut, onAuthStateChanged 
+} from "./firebase-config.js";
 
 const RBSTORE_CONFIG = {
   whatsappNumber: "584120500675",
@@ -147,7 +154,60 @@ async function initApp() {
   setupScrollEffects();
   updateStats();
   
+  // Start Firebase Firestore Realtime Sync
+  initFirebaseSync();
+
   console.log(`[RBstore] Catálogo cargado: ${products.length} productos, ${categories.length} categorías`);
+}
+
+// FIREBASE REALTIME FIRESTORE LISTENER
+function initFirebaseSync() {
+  try {
+    const q = query(collection(db, "productos"));
+    onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        const firestoreProducts = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          firestoreProducts.push({
+            id: docSnap.id,
+            name: data.nombre || data.name || "Producto",
+            sector: data.categoria || data.sector || "varios",
+            price: Number(data.precio || data.price || 0),
+            oldPrice: data.precioAnterior || data.oldPrice ? Number(data.precioAnterior || data.oldPrice) : null,
+            badge: data.badge || "",
+            image: data.imagenUrl || data.image || "images/cargador_20w.jpg",
+            description: data.descripcion || data.description || ""
+          });
+        });
+
+        products = firestoreProducts;
+        renderCategoriesGrid();
+        renderSectorOptions();
+        renderProductsGrid();
+        renderAdminProductsTable();
+        updateStats();
+        console.log(`[RBstore Firebase] 🔥 ${products.length} productos sincronizados en tiempo real desde Firestore (rbstore-a959f)`);
+      }
+    }, (err) => {
+      console.log("[RBstore Firebase] Firestore listener status:", err.message);
+    });
+  } catch(e) {
+    console.log("[RBstore Firebase] Firestore setup:", e);
+  }
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      console.log("[RBstore Auth] Autenticado como dueño en Firebase:", user.email);
+      isAdminLoggedIn = true;
+      const adminDash = document.getElementById("adminDashboardView");
+      const adminLogin = document.getElementById("adminLoginView");
+      if (adminDash && adminLogin) {
+        adminLogin.style.display = "none";
+        adminDash.style.display = "block";
+      }
+    }
+  });
 }
 
 // FETCH REMOTE CATALOG.JSON (Single source of truth for all visitors)
@@ -798,47 +858,120 @@ function handleImageFileUpload(input) {
   }
 }
 
-function handleProductFormSubmit(e) {
+async function handleProductFormSubmit(e) {
   e.preventDefault();
   const editId = document.getElementById("editProductId").value;
+  const fileInput = document.getElementById("prodFileInput");
+  const file = fileInput && fileInput.files ? fileInput.files[0] : null;
 
-  const newProd = {
-    id: editId || `rb_${Date.now()}`,
-    name: document.getElementById("prodName").value.trim(),
-    sector: document.getElementById("prodSector").value,
-    price: parseFloat(document.getElementById("prodPrice").value),
-    oldPrice: document.getElementById("prodOldPrice").value ? parseFloat(document.getElementById("prodOldPrice").value) : null,
-    badge: document.getElementById("prodBadge").value || null,
-    image: document.getElementById("prodImage").value.trim(),
-    description: document.getElementById("prodDesc").value.trim()
-  };
+  let imageUrl = document.getElementById("prodImage").value.trim();
 
-  if (editId) {
-    const idx = products.findIndex(p => p.id === editId);
-    if (idx !== -1) products[idx] = newProd;
-    showToast("Producto actualizado con éxito");
-  } else {
-    products.unshift(newProd);
-    showToast("Nuevo producto agregado al catálogo");
+  // Upload file to Firebase Storage if selected
+  if (file) {
+    try {
+      showToast("📤 Subiendo foto a Firebase Storage...");
+      const storageRef = ref(storage, `productos/${Date.now()}_${file.name}`);
+      const snap = await uploadBytes(storageRef, file);
+      imageUrl = await getDownloadURL(snap.ref);
+      showToast("✅ Imagen subida exitosamente a Firebase Storage");
+    } catch(err) {
+      console.error("Error subiendo a Storage:", err);
+      showToast("⚠️ Usando imagen local: " + err.message);
+    }
   }
 
-  saveCatalogData();
+  const prodData = {
+    nombre: document.getElementById("prodName").value.trim(),
+    categoria: document.getElementById("prodSector").value,
+    precio: parseFloat(document.getElementById("prodPrice").value),
+    precioAnterior: document.getElementById("prodOldPrice").value ? parseFloat(document.getElementById("prodOldPrice").value) : null,
+    badge: document.getElementById("prodBadge").value || "",
+    imagenUrl: imageUrl || "images/cargador_20w.jpg",
+    descripcion: document.getElementById("prodDesc").value.trim(),
+    disponible: true,
+    creadoEn: serverTimestamp()
+  };
+
+  const newProdLocal = {
+    id: editId || `rb_${Date.now()}`,
+    name: prodData.nombre,
+    sector: prodData.categoria,
+    price: prodData.precio,
+    oldPrice: prodData.precioAnterior,
+    badge: prodData.badge,
+    image: prodData.imagenUrl,
+    description: prodData.descripcion
+  };
+
+  // Firestore save
+  try {
+    if (editId && editId.length > 10) {
+      await updateDoc(doc(db, "productos", editId), prodData);
+      showToast("🔥 Producto actualizado en Firestore");
+    } else {
+      await addDoc(collection(db, "productos"), prodData);
+      showToast("🔥 Producto guardado en Firestore en tiempo real");
+    }
+  } catch(err) {
+    console.error("Error guardando en Firestore:", err);
+    if (editId) {
+      const idx = products.findIndex(p => p.id === editId);
+      if (idx !== -1) products[idx] = newProdLocal;
+    } else {
+      products.unshift(newProdLocal);
+    }
+    saveCatalogData();
+  }
+
   renderProductsGrid();
   renderAdminProductsTable();
   hideProductForm();
   updateStats();
 }
 
-function deleteProduct(productId) {
+async function deleteProduct(productId) {
   if (confirm("¿Estás seguro de eliminar este producto del catálogo?")) {
+    try {
+      if (productId && productId.length > 10) {
+        await deleteDoc(doc(db, "productos", productId));
+        showToast("🔥 Producto eliminado de Firestore");
+      }
+    } catch(err) {
+      console.error("Error eliminando de Firestore:", err);
+    }
+
     products = products.filter(p => p.id !== productId);
     saveCatalogData();
     renderProductsGrid();
     renderAdminProductsTable();
     updateStats();
-    showToast("Producto eliminado del catálogo");
   }
 }
+
+async function seedInitialDataToFirestore() {
+  if (!confirm("¿Deseas subir los productos actuales a tu Firestore en Firebase?")) return;
+  try {
+    showToast("🌱 Subiendo productos a Firestore...");
+    for (const p of products) {
+      await addDoc(collection(db, "productos"), {
+        nombre: p.name,
+        categoria: p.sector,
+        precio: p.price,
+        precioAnterior: p.oldPrice || null,
+        badge: p.badge || "",
+        imagenUrl: p.image,
+        descripcion: p.description || "",
+        disponible: true,
+        creadoEn: serverTimestamp()
+      });
+    }
+    showToast("🔥 ¡Productos subidos a Firestore con éxito!");
+  } catch(err) {
+    console.error("Error sembrando Firestore:", err);
+    showToast("Error subiendo a Firestore: " + err.message);
+  }
+}
+window.seedInitialDataToFirestore = seedInitialDataToFirestore;
 
 function resetDefaultCatalog() {
   if (confirm("¿Deseas restablecer el catálogo a los productos y categorías iniciales de RBstore?")) {

@@ -28,17 +28,18 @@ import {
   onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
 
-// ⚠️ REEMPLAZA ESTOS VALORES CON TUS LLAVES DE FIREBASE CONSOLE
+// REAL FIREBASE CONFIGURATION (rbstore-a959f)
 const firebaseConfig = {
-  apiKey: "TU_API_KEY_AQUI",
-  authDomain: "tu-proyecto.firebaseapp.com",
-  projectId: "tu-proyecto-id",
-  storageBucket: "tu-proyecto.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1:1234567890:web:abcdef123456"
+  apiKey: "AIzaSyBKSEXRCDMcgDP6gi2WXoe2e6jFNqV0aFE",
+  authDomain: "rbstore-a959f.firebaseapp.com",
+  projectId: "rbstore-a959f",
+  storageBucket: "rbstore-a959f.firebasestorage.app",
+  messagingSenderId: "850130649157",
+  appId: "1:850130649157:web:0027c82bea42cccfb7232c",
+  measurementId: "G-TWF9TFGGH5"
 };
 
-// Inicializar Firebase App
+// Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 
 // Inicializar Servicios
@@ -46,7 +47,7 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const auth = getAuth(app);
 
-// Exportar funciones helper para Firestore, Storage y Auth
+// Exportar helpers para uso en app.js
 export { 
   collection, 
   onSnapshot, 
