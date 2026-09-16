@@ -5,7 +5,7 @@
 const RBSTORE_CONFIG = {
   whatsappNumber: "584120500675",
   adminKey: "2828",
-  storageKey: "rbstore_catalog_v23"
+  storageKey: "rbstore_catalog_v24"
 };
 
 // INITIAL SHOWCASE CATALOG (In exact order specified by user)
@@ -477,7 +477,7 @@ function updateModalTotal() {
 
   const orderBtn = document.getElementById("btnModalOrder");
   if (orderBtn) {
-    const message = `¡Hola RBstore! Quisiera pedir el producto:\n- *${selectedProduct.name}*\n- Cantidad: ${selectedQuantity}\n- Precio Total: $${total}\n\n📍 Ubicación: Centro comercial central, planta baja Local 10`;
+    const message = `¡Hola RBstore! Quisiera pedir el producto:\n- *${selectedProduct.name}*\n- Cantidad: ${selectedQuantity}\n- Precio Total: $${total}\n\nUbicación: Centro comercial central, planta baja Local 10`;
     orderBtn.href = `https://wa.me/${RBSTORE_CONFIG.whatsappNumber}?text=${encodeURIComponent(message)}`;
   }
 }

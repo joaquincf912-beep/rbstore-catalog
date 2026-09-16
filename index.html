@@ -9,7 +9,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="style.css?v=15.0">
+  <link rel="stylesheet" href="style.css?v=16.0">
 </head>
 <body>
 
@@ -32,7 +32,7 @@
           <li><a href="#catalogo">Catálogo</a></li>
           <li><a href="#nosotros">Nosotros</a></li>
           <li><a href="#contacto">Contacto</a></li>
-          <li><a href="#" onclick="openAdminModal(); return false;" style="color: var(--accent-bright); font-weight: 600;">🔐 Panel Dueño</a></li>
+          <li><a href="#" onclick="openAdminModal(); return false;" style="color: var(--accent-bright); font-weight: 600;">Panel Dueño</a></li>
         </ul>
       </nav>
 
@@ -159,7 +159,9 @@
 
       <!-- Empty state when no results -->
       <div id="emptyState" class="empty-state" style="display: none;">
-        <div class="empty-state__icon">🔍</div>
+        <div class="empty-state__icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
         <h3 class="empty-state__title">No encontramos resultados</h3>
         <p class="empty-state__desc">Intenta con otro término de búsqueda o navega por nuestras categorías</p>
         <button id="btnResetFilter" class="btn btn--primary" style="margin-top: 16px;">Ver todos los productos</button>
@@ -175,7 +177,9 @@
 
       <div class="features__grid">
         <div class="feature-card">
-          <div class="feature-card__icon">🛡️</div>
+          <div class="feature-card__icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
           <h3 class="feature-card__title">Garantía en Productos</h3>
           <p class="feature-card__desc">Todos nuestros productos cuentan con garantía. Tu compra está protegida con nosotros.</p>
         </div>
@@ -276,7 +280,7 @@
       </div>
       <div style="margin-top: 12px; text-align: center; width: 100%;">
         <button onclick="openAdminModal()" style="background: none; border: none; color: var(--text-muted); font-size: .8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; transition: color .2s ease;" onmouseover="this.style.color='var(--accent-bright)'" onmouseout="this.style.color='var(--text-muted)'">
-          🔐 Panel de Control (Dueño)
+          Panel de Control (Dueño)
         </button>
       </div>
     </div>
@@ -324,7 +328,7 @@
 
       <!-- Login View -->
       <div id="adminLoginView">
-        <h2 class="modal-title" style="margin-bottom: 20px;">🔐 Panel Admin RBstore</h2>
+        <h2 class="modal-title" style="margin-bottom: 20px;">Panel Admin RBstore</h2>
         <p style="color: var(--text-secondary); margin-bottom: 24px;">Ingresa la contraseña del administrador</p>
         <input type="password" id="adminPassInput" placeholder="Contraseña" class="admin-input" onkeydown="if(event.key==='Enter') submitAdminLogin()">
         <p id="adminLoginError" class="admin-error" style="display: none;">Contraseña incorrecta</p>
@@ -333,10 +337,10 @@
 
       <!-- Dashboard View -->
       <div id="adminDashboardView" style="display: none;">
-        <h2 class="modal-title" style="margin-bottom: 20px;">📦 Gestión del Catálogo</h2>
+        <h2 class="modal-title" style="margin-bottom: 20px;">Gestión del Catálogo</h2>
         <div class="admin-toolbar">
           <button id="btnShowAddProduct" class="btn btn--primary">+ Agregar Producto</button>
-          <button id="btnResetDefaultCatalog" class="btn btn--outline">🔄 Restablecer</button>
+          <button id="btnResetDefaultCatalog" class="btn btn--outline">Restablecer</button>
         </div>
 
         <!-- Add/Edit Form (hidden by default) -->
@@ -359,7 +363,7 @@
               <option value="nuevo">Nuevo</option>
               <option value="oferta">Oferta</option>
             <div style="margin-bottom: 8px; text-align: left;">
-              <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">📷 Seleccionar foto desde tu dispositivo:</label>
+              <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Seleccionar foto desde tu dispositivo:</label>
               <input type="file" id="prodFileInput" accept="image/*" class="admin-input" onchange="handleImageFileUpload(this)">
             </div>
             <input type="text" id="prodImage" placeholder="O pega la URL/ruta de la imagen (ej: images/producto.jpg)" required class="admin-input">
@@ -406,6 +410,6 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
   </button>
 
-  <script src="app.js?v=15.0"></script>
+  <script src="app.js?v=16.0"></script>
 </body>
 </html>
