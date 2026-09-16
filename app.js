@@ -5,7 +5,7 @@
 const RBSTORE_CONFIG = {
   whatsappNumber: "584120500675",
   adminKey: "2828",
-  storageKey: "rbstore_catalog_v21"
+  storageKey: "rbstore_catalog_v22"
 };
 
 // INITIAL SHOWCASE CATALOG (In exact order specified by user)
@@ -581,6 +581,18 @@ function editProduct(productId) {
   document.getElementById("prodDesc").value = p.description;
 
   document.getElementById("adminFormContainer").scrollIntoView({ behavior: "smooth" });
+}
+
+function handleImageFileUpload(input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById("prodImage").value = e.target.result;
+      showToast("Foto cargada con éxito");
+    };
+    reader.readAsDataURL(file);
+  }
 }
 
 function handleProductFormSubmit(e) {
