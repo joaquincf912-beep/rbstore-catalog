@@ -485,6 +485,11 @@ function updateModalTotal() {
 // ═══════════════════════════════════════════════
 // ADMIN PANEL
 // ═══════════════════════════════════════════════
+function openAdminModal() {
+  triggerAdminModal();
+}
+window.openAdminModal = openAdminModal;
+
 function triggerAdminModal() {
   const overlay = document.getElementById("adminOverlay");
   if (!overlay) return;
