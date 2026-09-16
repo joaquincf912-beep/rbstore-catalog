@@ -109,66 +109,6 @@ const DEFAULT_PRODUCTS = [
     badge: "nuevo",
     image: "images/magsafe_charger_20w.jpg",
     description: "Cargador inalámbrico magnético MagSafe de 20W. Alineación magnética rápida e instantánea para iPhone."
-  },
-  {
-    id: "rb12",
-    name: "Cafetera Italiana Express",
-    sector: "hogar",
-    price: 35.00,
-    oldPrice: 45.00,
-    badge: "popular",
-    image: "images/prod_cafetera.jpg",
-    description: "Cafetera de acero inoxidable para café espresso de alta calidad. Capacidad de 6 tazas con mango ergonómico antitérmico."
-  },
-  {
-    id: "rb13",
-    name: "Set de Copas de Cristal",
-    sector: "hogar",
-    price: 28.00,
-    oldPrice: 40.00,
-    badge: "nuevo",
-    image: "images/prod_copas.jpg",
-    description: "Set de 6 copas de cristal fino de alta claridad para vino y bebidas. Diseño elegante y resistente."
-  },
-  {
-    id: "rb14",
-    name: "Set de Cuchillos de Cocina Premium",
-    sector: "hogar",
-    price: 30.00,
-    oldPrice: 45.00,
-    badge: "oferta",
-    image: "images/prod_cuchillos.jpg",
-    description: "Juego de cuchillos profesionales en acero inoxidable con bloque de soporte magnético y afilado de precisión."
-  },
-  {
-    id: "rb15",
-    name: "Navaja Multiuso Táctica",
-    sector: "varios",
-    price: 18.00,
-    oldPrice: 25.00,
-    badge: "exclusivo",
-    image: "images/prod_navaja.jpg",
-    description: "Navaja de bolsillo multifunción de acero reforzado con clip de cinturón, rompevidrios y abrelatas."
-  },
-  {
-    id: "rb16",
-    name: "Juego de Ollas Antiadherentes",
-    sector: "hogar",
-    price: 65.00,
-    oldPrice: 85.00,
-    badge: "popular",
-    image: "images/prod_ollas.jpg",
-    description: "Batería de cocina de 7 piezas antiadherentes de granito con tapas de vidrio templado y distribución uniforme de calor."
-  },
-  {
-    id: "rb17",
-    name: "Papelera Automática de Sensor",
-    sector: "hogar",
-    price: 22.00,
-    oldPrice: 32.00,
-    badge: "nuevo",
-    image: "images/prod_papelera.jpg",
-    description: "Cubo de basura inteligente con sensor de movimiento infrarrojo, apertura automática silenciosa y diseño higiénico."
   }
 ];
 
@@ -177,7 +117,6 @@ const DEFAULT_CATEGORIES = [
   { id: "cargadores", name: "Cargadores & Cables", icon: "⚡" },
   { id: "iluminacion", name: "Iluminación LED", icon: "💡" },
   { id: "audifonos", name: "Audífonos", icon: "🎧" },
-  { id: "hogar", name: "Hogar & Cocina", icon: "🏠" },
   { id: "varios", name: "Artículos Varios", icon: "📦" }
 ];
 
