@@ -396,6 +396,8 @@ button { cursor: pointer; font: inherit; border: none; background: none; }
   transition: var(--transition);
   will-change: transform, border-color;
   transform: translateZ(0);
+  color: #f0f0f5 !important;
+  font-family: inherit;
 }
 .cat-card:hover,
 .cat-card.active {
@@ -429,12 +431,14 @@ button { cursor: pointer; font: inherit; border: none; background: none; }
   display: inline-block !important;
 }
 .cat-card__name {
-  font-weight: 600;
-  font-size: .92rem;
+  font-weight: 700 !important;
+  font-size: .95rem;
+  color: #ffffff !important;
 }
 .cat-card__count {
   font-size: .78rem;
-  color: var(--text-muted);
+  color: #9a9ab0 !important;
+  font-weight: 500;
   margin-top: 4px;
 }
 
@@ -1204,25 +1208,31 @@ button { cursor: pointer; font: inherit; border: none; background: none; }
 
 .modal-close {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 14px;
+  right: 14px;
   width: 40px;
   height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, .08);
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  color: var(--text-primary);
-  font-size: 1.5rem;
-  z-index: 10;
-  transition: var(--transition);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #1c1c28 !important;
+  border: 2px solid rgba(255, 255, 255, 0.4) !important;
+  border-radius: 50% !important;
+  color: #ffffff !important;
+  font-size: 1.6rem !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  z-index: 100 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7), 0 0 12px rgba(61, 139, 253, 0.5) !important;
+  cursor: pointer !important;
+  transition: transform .2s ease, background .2s ease, border-color .2s ease !important;
 }
 
 .modal-close:hover {
-  background: var(--accent-bright);
-  border-color: var(--accent-bright);
+  background: var(--accent-bright) !important;
+  border-color: #ffffff !important;
+  color: #ffffff !important;
+  transform: scale(1.1) !important;
 }
 
 .modal-body {
