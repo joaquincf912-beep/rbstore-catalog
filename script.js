@@ -216,6 +216,7 @@ function createProductCard(product, index) {
   else if (product.badge === "nuevo") { badgeLabel = "Nuevo"; badgeClass = "product-card__badge--new"; }
   else if (product.badge === "oferta") { badgeLabel = "Oferta"; badgeClass = "product-card__badge--sale"; }
   else if (product.badge === "exclusivo") { badgeLabel = "Exclusivo"; badgeClass = "product-card__badge--hot"; }
+  else if (product.badge === "agotado") { badgeLabel = "Agotado"; badgeClass = "product-card__badge--soldout"; }
 
   const badgeHtml = badgeLabel ? `<span class="product-card__badge ${badgeClass}">${badgeLabel}</span>` : "";
 
@@ -447,6 +448,7 @@ function openProductModal(productId) {
     if (product.badge === "nuevo") badgeLabel = "Nuevo";
     if (product.badge === "oferta") badgeLabel = "Oferta";
     if (product.badge === "exclusivo") badgeLabel = "Exclusivo";
+    if (product.badge === "agotado") badgeLabel = "Agotado";
     badgeEl.innerText = badgeLabel;
   } else {
     badgeEl.style.display = "none";

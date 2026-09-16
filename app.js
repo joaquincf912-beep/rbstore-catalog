@@ -167,7 +167,11 @@ function loadCategoriesData() {
 }
 
 function saveCategoriesData() {
-  localStorage.setItem("rbstore_categories_v2", JSON.stringify(categories));
+  try {
+    localStorage.setItem("rbstore_categories_v2", JSON.stringify(categories));
+  } catch(e) {
+    console.error("Error saving categories to localStorage", e);
+  }
 }
 
 // LOAD CATALOG DATA FROM STORAGE OR DEFAULTS
@@ -201,7 +205,12 @@ function loadCatalogData() {
 }
 
 function saveCatalogData() {
-  localStorage.setItem(RBSTORE_CONFIG.storageKey, JSON.stringify(products));
+  try {
+    localStorage.setItem(RBSTORE_CONFIG.storageKey, JSON.stringify(products));
+  } catch(e) {
+    console.error("Error saving catalog to localStorage", e);
+    showToast("Advertencia: No se pudo guardar en almacenamiento local");
+  }
 }
 
 // DYNAMIC CATEGORIES GRID RENDERER
@@ -318,6 +327,7 @@ function createProductCard(product, index) {
   else if (product.badge === "nuevo") { badgeLabel = "Nuevo"; badgeClass = "product-card__badge--new"; }
   else if (product.badge === "oferta") { badgeLabel = "Oferta"; badgeClass = "product-card__badge--sale"; }
   else if (product.badge === "exclusivo") { badgeLabel = "Exclusivo"; badgeClass = "product-card__badge--hot"; }
+  else if (product.badge === "agotado") { badgeLabel = "Agotado"; badgeClass = "product-card__badge--soldout"; }
 
   const badgeHtml = badgeLabel ? `<span class="product-card__badge ${badgeClass}">${badgeLabel}</span>` : "";
 
@@ -396,7 +406,18 @@ function setupEventListeners() {
     if (navCta) navCta.addEventListener("click", closeNav);
   }
 
-
+  // Real-time synchronization across tabs
+  window.addEventListener("storage", (e) => {
+    if (e.key === RBSTORE_CONFIG.storageKey || e.key === "rbstore_categories_v2") {
+      loadCategoriesData();
+      loadCatalogData();
+      renderCategoriesGrid();
+      renderSectorOptions();
+      renderProductsGrid();
+      if (isAdminLoggedIn) renderAdminProductsTable();
+      updateStats();
+    }
+  });
 
   // Search Input
   const searchInput = document.getElementById("searchInput");
@@ -545,6 +566,7 @@ function openProductModal(productId) {
     if (product.badge === "nuevo") badgeLabel = "Nuevo";
     if (product.badge === "oferta") badgeLabel = "Oferta";
     if (product.badge === "exclusivo") badgeLabel = "Exclusivo";
+    if (product.badge === "agotado") badgeLabel = "Agotado";
     badgeEl.innerText = badgeLabel;
   } else {
     badgeEl.style.display = "none";
@@ -691,10 +713,45 @@ function editProduct(productId) {
 function handleImageFileUpload(input) {
   if (input.files && input.files[0]) {
     const file = input.files[0];
+    showToast("Procesando y optimizando imagen...");
+    
     const reader = new FileReader();
     reader.onload = function(e) {
-      document.getElementById("prodImage").value = e.target.result;
-      showToast("Foto cargada con éxito");
+      const img = new Image();
+      img.onload = function() {
+        try {
+          const canvas = document.createElement("canvas");
+          const MAX_SIZE = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Compress to lightweight JPEG Base64
+          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.80);
+          document.getElementById("prodImage").value = compressedDataUrl;
+          showToast("Foto optimizada y cargada instantáneamente");
+        } catch(err) {
+          document.getElementById("prodImage").value = e.target.result;
+          showToast("Foto cargada con éxito");
+        }
+      };
+      img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   }

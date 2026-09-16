@@ -506,6 +506,10 @@ button { cursor: pointer; font: inherit; border: none; background: none; }
   background: #10b981;
   color: #fff;
 }
+.product-card__badge--soldout {
+  background: #64748b;
+  color: #fff;
+}
 
 .product-card__img {
   position: relative;
@@ -1419,17 +1423,90 @@ button { cursor: pointer; font: inherit; border: none; background: none; }
     width: 100%;
     justify-content: center;
   }
-  .admin-table th, .admin-table td {
-    padding: 8px 10px;
-    font-size: .8rem;
+
+  /* Transform table into card layout on mobile */
+  .admin-table thead {
+    display: none;
+  }
+  .admin-table,
+  .admin-table tbody,
+  .admin-table tr,
+  .admin-table td {
+    display: block;
+    width: 100%;
+  }
+  .admin-table tr {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .admin-table td {
+    border-bottom: none;
+    padding: 0;
+    width: auto;
+  }
+  /* Image cell */
+  .admin-table td:nth-child(1) {
+    width: 50px;
+    flex-shrink: 0;
   }
   .admin-table-img {
-    width: 36px;
-    height: 36px;
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+  }
+  /* Name cell */
+  .admin-table td:nth-child(2) {
+    flex: 1;
+    min-width: 0;
+    font-size: .88rem;
+  }
+  .admin-table td:nth-child(2) strong {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Category cell */
+  .admin-table td:nth-child(3) {
+    width: 100%;
+    order: 3;
+  }
+  /* Price cell */
+  .admin-table td:nth-child(4) {
+    width: auto;
+    font-weight: 700;
+    color: var(--accent-bright);
+    font-size: .95rem;
+  }
+  /* Actions cell - FULL WIDTH, clearly visible */
+  .admin-table td:nth-child(5) {
+    width: 100%;
+    order: 4;
+    margin-top: 4px;
   }
   .admin-actions-cell {
-    flex-direction: column;
-    gap: 4px;
+    flex-direction: row;
+    gap: 8px;
+    width: 100%;
+  }
+  .admin-actions-cell .btn-action-edit,
+  .admin-actions-cell .btn-action-delete {
+    flex: 1;
+    text-align: center;
+    padding: 10px 14px;
+    font-size: .85rem;
+    border-radius: 8px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
