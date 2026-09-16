@@ -5,7 +5,7 @@
 const RBSTORE_CONFIG = {
   whatsappNumber: "584120500675",
   adminKey: "2828",
-  storageKey: "rbstore_catalog_v16"
+  storageKey: "rbstore_catalog_v17"
 };
 
 // INITIAL SHOWCASE CATALOG (In exact order specified by user)
