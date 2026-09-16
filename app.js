@@ -5,7 +5,7 @@
 const RBSTORE_CONFIG = {
   whatsappNumber: "584120500675",
   adminKey: "2828",
-  storageKey: "rbstore_catalog_v29"
+  storageKey: "rbstore_catalog_v41"
 };
 
 // INITIAL SHOWCASE CATALOG (In exact order specified by user)
@@ -135,9 +135,11 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function initApp() {
-  await loadRemoteCatalogData();
-  loadCategoriesData();
-  loadCatalogData();
+  const remoteOk = await loadRemoteCatalogData();
+  if (!remoteOk) {
+    loadCategoriesData();
+    loadCatalogData();
+  }
   renderCategoriesGrid();
   renderSectorOptions();
   renderProductsGrid();
@@ -155,28 +157,29 @@ async function loadRemoteCatalogData() {
     if (res.ok) {
       const data = await res.json();
       
-      // catalog.json ALWAYS overrides for all visitors
-      // This ensures owner changes propagate to everyone
+      let updated = false;
       if (data.products && Array.isArray(data.products) && data.products.length > 0) {
         products = data.products;
-        // Update localStorage so it's in sync
         localStorage.setItem(RBSTORE_CONFIG.storageKey, JSON.stringify(products));
-        // Also update defaults
         DEFAULT_PRODUCTS.length = 0;
         DEFAULT_PRODUCTS.push(...data.products);
+        updated = true;
       }
       if (data.categories && Array.isArray(data.categories) && data.categories.length > 0) {
         categories = data.categories;
         localStorage.setItem("rbstore_categories_v2", JSON.stringify(categories));
         DEFAULT_CATEGORIES.length = 0;
         DEFAULT_CATEGORIES.push(...data.categories);
+        updated = true;
       }
       
       console.log(`[RBstore] Catálogo remoto sincronizado: ${products.length} productos, ${categories.length} categorías`);
+      return updated;
     }
   } catch(e) {
     console.log("[RBstore] Usando catálogo local predeterminado");
   }
+  return false;
 }
 
 // LOAD CATEGORIES DATA
