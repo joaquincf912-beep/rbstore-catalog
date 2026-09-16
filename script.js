@@ -5,7 +5,7 @@
 const RBSTORE_CONFIG = {
   whatsappNumber: "584120500675",
   adminKey: "2828",
-  storageKey: "rbstore_catalog_v13"
+  storageKey: "rbstore_catalog_v14"
 };
 
 // INITIAL SHOWCASE CATALOG (In exact order specified by user)
@@ -641,6 +641,8 @@ function updateStats() {
   const countEl = document.getElementById("stat-productos");
   if (countEl) countEl.innerText = products.length;
 
+  updateCategoryCounts();
+
   const counters = document.querySelectorAll("[data-count]");
   counters.forEach(el => {
     const target = parseInt(el.getAttribute("data-count"));
@@ -661,6 +663,25 @@ function updateStats() {
       }
     }
     requestAnimationFrame(step);
+  });
+}
+
+function updateCategoryCounts() {
+  const counts = {
+    todos: products.length,
+    cargadores: products.filter(p => p.sector === "cargadores").length,
+    iluminacion: products.filter(p => p.sector === "iluminacion").length,
+    audifonos: products.filter(p => p.sector === "audifonos").length,
+    varios: products.filter(p => p.sector === "varios").length
+  };
+
+  document.querySelectorAll(".cat-card").forEach(card => {
+    const cat = card.getAttribute("data-category");
+    const countEl = card.querySelector(".cat-card__count");
+    if (countEl && counts[cat] !== undefined) {
+      const num = counts[cat];
+      countEl.innerText = `${num} ${num === 1 ? 'producto' : 'productos'}`;
+    }
   });
 }
 
