@@ -139,6 +139,39 @@ function safeStr(val) {
   return String(val).toLowerCase().trim();
 }
 
+// DELETED ITEMS TRACKER (PREVENTS DELETED BASE PRODUCTS/CATEGORIES FROM REAPPEARING)
+function getDeletedProductIds() {
+  try {
+    const saved = localStorage.getItem("rbstore_deleted_product_ids");
+    return saved ? JSON.parse(saved) : [];
+  } catch(e) { return []; }
+}
+
+function addDeletedProductId(id, name) {
+  try {
+    const list = getDeletedProductIds();
+    if (id && !list.includes(String(id))) list.push(String(id));
+    if (name && !list.includes(safeStr(name))) list.push(safeStr(name));
+    localStorage.setItem("rbstore_deleted_product_ids", JSON.stringify(list));
+  } catch(e) {}
+}
+
+function getDeletedCategoryIds() {
+  try {
+    const saved = localStorage.getItem("rbstore_deleted_category_ids");
+    return saved ? JSON.parse(saved) : [];
+  } catch(e) { return []; }
+}
+
+function addDeletedCategoryId(id, name) {
+  try {
+    const list = getDeletedCategoryIds();
+    if (id && !list.includes(String(id))) list.push(String(id));
+    if (name && !list.includes(safeStr(name))) list.push(safeStr(name));
+    localStorage.setItem("rbstore_deleted_category_ids", JSON.stringify(list));
+  } catch(e) {}
+}
+
 // SAFE DOM READY / IMMEDIATE EXECUTION
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initApp);
@@ -148,8 +181,11 @@ if (document.readyState === "loading") {
 
 function initApp() {
   // 1. Load defaults as IMMEDIATE placeholder while Firestore connects
-  categories = [...DEFAULT_CATEGORIES];
-  products = [...DEFAULT_PRODUCTS];
+  const deletedProds = getDeletedProductIds();
+  const deletedCats = getDeletedCategoryIds();
+
+  categories = DEFAULT_CATEGORIES.filter(c => !deletedCats.includes(String(c.id)) && !deletedCats.includes(safeStr(c.name)));
+  products = DEFAULT_PRODUCTS.filter(p => !deletedProds.includes(String(p.id)) && !deletedProds.includes(safeStr(p.name)));
 
   // 2. Render the UI with defaults right away so user sees something
   renderCategoriesGrid();
@@ -203,11 +239,25 @@ async function initFirebaseSync() {
           });
         });
 
-        // ALWAYS merge DEFAULT_PRODUCTS with firestoreProducts so base catalog is never lost
+        // Merge DEFAULT_PRODUCTS with firestoreProducts, excluding deleted items
+        const deletedProds = getDeletedProductIds();
         const productMap = new Map();
-        DEFAULT_PRODUCTS.forEach(p => productMap.set(String(p.id), p));
-        firestoreProducts.forEach(p => {
+
+        DEFAULT_PRODUCTS.forEach(p => {
+          const pId = String(p.id);
           const pNameLower = safeStr(p.name);
+          if (!deletedProds.includes(pId) && !deletedProds.includes(pNameLower)) {
+            productMap.set(pId, p);
+          }
+        });
+
+        firestoreProducts.forEach(p => {
+          const pId = String(p.id);
+          const pNameLower = safeStr(p.name);
+          if (deletedProds.includes(pId) || deletedProds.includes(pNameLower)) {
+            return; // Exclude deleted item
+          }
+
           const existingKey = Array.from(productMap.keys()).find(k => {
             const item = productMap.get(k);
             return k === p.id || (item && safeStr(item.name) === pNameLower);
@@ -219,10 +269,7 @@ async function initFirebaseSync() {
           }
         });
 
-        const merged = Array.from(productMap.values());
-        if (merged && merged.length > 0) {
-          products = merged;
-        }
+        products = Array.from(productMap.values());
         firestoreProductsLoaded = true;
 
         renderCategoriesGrid();
@@ -252,11 +299,25 @@ async function initFirebaseSync() {
           });
         });
 
-        // ALWAYS merge DEFAULT_CATEGORIES with firestoreCategories (so defaults are NEVER wiped out)
+        // Merge DEFAULT_CATEGORIES with firestoreCategories, excluding deleted items
+        const deletedCats = getDeletedCategoryIds();
         const categoryMap = new Map();
-        DEFAULT_CATEGORIES.forEach(c => categoryMap.set(String(c.id), c));
-        firestoreCategories.forEach(c => {
+
+        DEFAULT_CATEGORIES.forEach(c => {
+          const cId = String(c.id);
           const cNameLower = safeStr(c.name);
+          if (!deletedCats.includes(cId) && !deletedCats.includes(cNameLower)) {
+            categoryMap.set(cId, c);
+          }
+        });
+
+        firestoreCategories.forEach(c => {
+          const cId = String(c.id);
+          const cNameLower = safeStr(c.name);
+          if (deletedCats.includes(cId) || deletedCats.includes(cNameLower)) {
+            return; // Exclude deleted item
+          }
+
           const existingKey = Array.from(categoryMap.keys()).find(k => {
             const item = categoryMap.get(k);
             return k === c.id || (item && safeStr(item.name) === cNameLower);
@@ -271,10 +332,7 @@ async function initFirebaseSync() {
           }
         });
 
-        const mergedCat = Array.from(categoryMap.values());
-        if (mergedCat && mergedCat.length > 0) {
-          categories = mergedCat;
-        }
+        categories = Array.from(categoryMap.values());
         firestoreCategoriesLoaded = true;
 
         renderCategoriesGrid();
@@ -1117,23 +1175,32 @@ async function handleProductFormSubmit(e) {
 }
 
 async function deleteProduct(productId) {
-  if (confirm("¿Estás seguro de eliminar este producto del catálogo?")) {
-    try {
-      const fb = await initFirebaseSDK();
-      if (fb && productId && productId.length > 10) {
-        const { db, firestore } = fb;
-        await firestore.deleteDoc(firestore.doc(db, "productos", productId));
-        showToast("🔥 Producto eliminado de Firestore");
-      }
-    } catch(err) {
-      console.error("Error eliminando de Firestore:", err);
-    }
+  const p = products.find(item => item.id === productId);
+  const pName = p ? p.name : "";
 
-    products = products.filter(p => p.id !== productId);
+  if (confirm(`¿Estás seguro de eliminar "${pName || 'este producto'}" del catálogo?`)) {
+    // 1. Record as deleted so it NEVER gets re-merged by Firestore listener or page refresh
+    addDeletedProductId(productId, pName);
+
+    // 2. Immediate local state removal for ZERO LAG responsiveness
+    products = products.filter(item => item.id !== productId);
     saveCatalogData();
+
     renderProductsGrid();
     renderAdminProductsTable();
     updateStats();
+
+    // 3. Delete from Cloud Firestore Database
+    try {
+      const fb = await initFirebaseSDK();
+      if (fb && productId) {
+        const { db, firestore } = fb;
+        await firestore.deleteDoc(firestore.doc(db, "productos", productId));
+        showToast("🔥 Producto eliminado permanentemente");
+      }
+    } catch(err) {
+      console.warn("Aviso: Producto eliminado localmente de la vista del usuario.", err);
+    }
   }
 }
 
@@ -1169,6 +1236,8 @@ window.seedInitialDataToFirestore = seedInitialDataToFirestore;
 
 function resetDefaultCatalog() {
   if (confirm("¿Deseas restablecer el catálogo a los productos y categorías iniciales de RBstore?")) {
+    localStorage.removeItem("rbstore_deleted_product_ids");
+    localStorage.removeItem("rbstore_deleted_category_ids");
     products = [...DEFAULT_PRODUCTS];
     categories = [...DEFAULT_CATEGORIES];
     saveCatalogData();
@@ -1274,18 +1343,8 @@ async function deleteCategory(catId) {
   }
 
   if (confirm(`¿Seguro que deseas eliminar la categoría "${cat.name}"? Los productos asignados serán reasignados.`)) {
+    addDeletedCategoryId(catId, cat.name);
     categories = categories.filter(c => c.id !== catId);
-
-    try {
-      const fb = await initFirebaseSDK();
-      if (fb) {
-        const { db, firestore } = fb;
-        await firestore.deleteDoc(firestore.doc(db, "categorias", catId));
-        showToast(`🔥 Categoría "${cat.name}" eliminada de Firestore`);
-      }
-    } catch(err) {
-      console.error("Error eliminando categoría de Firestore:", err);
-    }
 
     const fallbackId = categories[0].id;
     products.forEach(p => {
@@ -1301,6 +1360,17 @@ async function deleteCategory(catId) {
     renderProductsGrid();
     renderAdminProductsTable();
     updateStats();
+
+    try {
+      const fb = await initFirebaseSDK();
+      if (fb && catId) {
+        const { db, firestore } = fb;
+        await firestore.deleteDoc(firestore.doc(db, "categorias", catId));
+        showToast(`🔥 Categoría "${cat.name}" eliminada permanentemente`);
+      }
+    } catch(err) {
+      console.warn("Aviso: Categoría eliminada localmente.", err);
+    }
   }
 }
 
