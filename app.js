@@ -2,12 +2,7 @@
    RBSTORE — CATALOG & INTERACTIVE LOGIC (FIREBASE V10 INTEGRATED)
    ========================================================================== */
 
-import { 
-  db, storage, auth,
-  collection, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy,
-  ref, uploadBytes, getDownloadURL,
-  signInWithEmailAndPassword, signOut, onAuthStateChanged 
-} from "./firebase-config.js";
+import { initFirebaseSDK } from "./firebase-config.js";
 
 const RBSTORE_CONFIG = {
   whatsappNumber: "584120500675",
@@ -165,7 +160,16 @@ function initApp() {
 // FIREBASE REALTIME FIRESTORE LISTENER (Productos + Categorías)
 // This is THE SINGLE SOURCE OF TRUTH. All visitors (including the owner) 
 // see data from Firestore in real-time merged with base catalog.
-function initFirebaseSync() {
+async function initFirebaseSync() {
+  const fb = await initFirebaseSDK();
+  if (!fb) {
+    console.log("[RBstore Firebase] Modo local activo (Firebase SDK no disponible).");
+    return;
+  }
+
+  const { db, auth, firestore, authMod } = fb;
+  const { collection, onSnapshot, query } = firestore;
+
   try {
     // 1. Productos Listener
     const q = query(collection(db, "productos"));
@@ -209,12 +213,6 @@ function initFirebaseSync() {
       console.log(`[RBstore Firebase] 🔥 ${products.length} productos listos (${firestoreProducts.length} en Firestore)`);
     }, (err) => {
       console.warn("[RBstore Firebase] Error en listener de productos:", err.message);
-      products = [...DEFAULT_PRODUCTS];
-      renderCategoriesGrid();
-      renderSectorOptions();
-      renderProductsGrid();
-      renderAdminProductsTable();
-      updateStats();
     });
 
     // 2. Categorías Listener
@@ -253,36 +251,25 @@ function initFirebaseSync() {
       console.log(`[RBstore Firebase] 🏠 ${categories.length} categorías listas (${firestoreCategories.length} en Firestore)`);
     }, (cErr) => {
       console.warn("[RBstore Firebase] Error en listener de categorías:", cErr.message);
-      categories = [...DEFAULT_CATEGORIES];
-      renderCategoriesGrid();
-      renderSectorOptions();
-      renderAdminCategoriesList();
-      renderProductsGrid();
+    });
+
+    authMod.onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("[RBstore Auth] Autenticado como dueño en Firebase:", user.email);
+        isAdminLoggedIn = true;
+        const adminDash = document.getElementById("adminDashboardView");
+        const adminLogin = document.getElementById("adminLoginView");
+        if (adminDash && adminLogin) {
+          adminLogin.style.display = "none";
+          adminDash.style.display = "block";
+        }
+      }
     });
 
   } catch(e) {
-    console.error("[RBstore Firebase] Error inicializando Firestore:", e);
-    products = [...DEFAULT_PRODUCTS];
-    categories = [...DEFAULT_CATEGORIES];
-    renderCategoriesGrid();
-    renderSectorOptions();
-    renderProductsGrid();
-    updateStats();
+    console.error("[RBstore Firebase] Error en inicialización de sync:", e);
   }
 }
-
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      console.log("[RBstore Auth] Autenticado como dueño en Firebase:", user.email);
-      isAdminLoggedIn = true;
-      const adminDash = document.getElementById("adminDashboardView");
-      const adminLogin = document.getElementById("adminLoginView");
-      if (adminDash && adminLogin) {
-        adminLogin.style.display = "none";
-        adminDash.style.display = "block";
-      }
-    }
-  });
 }
 
 // LOAD CATEGORIES DATA
@@ -946,12 +933,19 @@ async function handleProductFormSubmit(e) {
 
   // Firestore save
   try {
-    if (editId && editId.length > 10) {
-      await updateDoc(doc(db, "productos", editId), prodData);
-      showToast("🔥 Producto actualizado en Firestore");
-    } else {
-      await addDoc(collection(db, "productos"), prodData);
-      showToast("🔥 Producto guardado en Firestore en tiempo real");
+    const fb = await initFirebaseSDK();
+    if (fb) {
+      const { db, firestore } = fb;
+      const { addDoc, updateDoc, collection, doc, serverTimestamp } = firestore;
+      prodData.creadoEn = serverTimestamp();
+
+      if (editId && editId.length > 10) {
+        await updateDoc(doc(db, "productos", editId), prodData);
+        showToast("🔥 Producto actualizado en Firestore");
+      } else {
+        await addDoc(collection(db, "productos"), prodData);
+        showToast("🔥 Producto guardado en Firestore en tiempo real");
+      }
     }
   } catch(err) {
     console.error("Error guardando en Firestore:", err);
@@ -973,8 +967,10 @@ async function handleProductFormSubmit(e) {
 async function deleteProduct(productId) {
   if (confirm("¿Estás seguro de eliminar este producto del catálogo?")) {
     try {
-      if (productId && productId.length > 10) {
-        await deleteDoc(doc(db, "productos", productId));
+      const fb = await initFirebaseSDK();
+      if (fb && productId && productId.length > 10) {
+        const { db, firestore } = fb;
+        await firestore.deleteDoc(firestore.doc(db, "productos", productId));
         showToast("🔥 Producto eliminado de Firestore");
       }
     } catch(err) {
@@ -993,20 +989,25 @@ async function seedInitialDataToFirestore() {
   if (!confirm("¿Deseas subir los productos actuales a tu Firestore en Firebase?")) return;
   try {
     showToast("🌱 Subiendo productos a Firestore...");
-    for (const p of products) {
-      await addDoc(collection(db, "productos"), {
-        nombre: p.name,
-        categoria: p.sector,
-        precio: p.price,
-        precioAnterior: p.oldPrice || null,
-        badge: p.badge || "",
-        imagenUrl: p.image,
-        descripcion: p.description || "",
-        disponible: true,
-        creadoEn: serverTimestamp()
-      });
+    const fb = await initFirebaseSDK();
+    if (fb) {
+      const { db, firestore } = fb;
+      const { addDoc, collection, serverTimestamp } = firestore;
+      for (const p of products) {
+        await addDoc(collection(db, "productos"), {
+          nombre: p.name,
+          categoria: p.sector,
+          precio: p.price,
+          precioAnterior: p.oldPrice || null,
+          badge: p.badge || "",
+          imagenUrl: p.image,
+          descripcion: p.description || "",
+          disponible: true,
+          creadoEn: serverTimestamp()
+        });
+      }
+      showToast("🔥 ¡Productos subidos a Firestore con éxito!");
     }
-    showToast("🔥 ¡Productos subidos a Firestore con éxito!");
   } catch(err) {
     console.error("Error sembrando Firestore:", err);
     showToast("Error subiendo a Firestore: " + err.message);
@@ -1069,12 +1070,17 @@ async function handleCategoryFormSubmit(e) {
 
   // Save to Cloud Firestore "categorias" collection in real-time!
   try {
-    await setDoc(doc(db, "categorias", catId), {
-      name: name,
-      icon: icon,
-      creadoEn: serverTimestamp()
-    });
-    showToast(`🔥 Categoría "${name}" guardada en Firestore en tiempo real`);
+    const fb = await initFirebaseSDK();
+    if (fb) {
+      const { db, firestore } = fb;
+      const { setDoc, doc, serverTimestamp } = firestore;
+      await setDoc(doc(db, "categorias", catId), {
+        name: name,
+        icon: icon,
+        creadoEn: serverTimestamp()
+      });
+      showToast(`🔥 Categoría "${name}" guardada en Firestore en tiempo real`);
+    }
   } catch(err) {
     console.error("Error guardando categoría en Firestore:", err);
   }
@@ -1119,8 +1125,12 @@ async function deleteCategory(catId) {
     categories = categories.filter(c => c.id !== catId);
 
     try {
-      await deleteDoc(doc(db, "categorias", catId));
-      showToast(`🔥 Categoría "${cat.name}" eliminada de Firestore`);
+      const fb = await initFirebaseSDK();
+      if (fb) {
+        const { db, firestore } = fb;
+        await firestore.deleteDoc(firestore.doc(db, "categorias", catId));
+        showToast(`🔥 Categoría "${cat.name}" eliminada de Firestore`);
+      }
     } catch(err) {
       console.error("Error eliminando categoría de Firestore:", err);
     }

@@ -1,35 +1,7 @@
 /* ==========================================================================
-   FIREBASE CONFIGURATION & INITIALIZATION (v10+ Modular SDK)
+   FIREBASE CONFIGURATION & SAFE DYNAMIC INITIALIZATION
    ========================================================================== */
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-import { 
-  getFirestore, 
-  collection, 
-  onSnapshot, 
-  addDoc, 
-  setDoc,
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  serverTimestamp, 
-  query, 
-  orderBy 
-} from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-import { 
-  getStorage, 
-  ref, 
-  uploadBytes, 
-  getDownloadURL 
-} from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
-import { 
-  getAuth, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-
-// REAL FIREBASE CONFIGURATION (rbstore-a959f)
 const firebaseConfig = {
   apiKey: "AIzaSyBKSEXRCDMcgDP6gi2WXoe2e6jFNqV0aFE",
   authDomain: "rbstore-a959f.firebaseapp.com",
@@ -40,30 +12,38 @@ const firebaseConfig = {
   measurementId: "G-TWF9TFGGH5"
 };
 
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
+let firebaseInstance = null;
 
-// Inicializar Servicios
-export const db = getFirestore(app);
-export const storage = getStorage(app);
-export const auth = getAuth(app);
+export async function initFirebaseSDK() {
+  if (firebaseInstance) return firebaseInstance;
 
-// Exportar helpers para uso en app.js
-export { 
-  collection, 
-  onSnapshot, 
-  addDoc, 
-  setDoc,
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  serverTimestamp, 
-  query, 
-  orderBy,
-  ref, 
-  uploadBytes, 
-  getDownloadURL,
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged 
-};
+  try {
+    const [appMod, firestoreMod, storageMod, authMod] = await Promise.all([
+      import("https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js"),
+      import("https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js"),
+      import("https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js")
+    ]);
+
+    const app = appMod.initializeApp(firebaseConfig);
+    const db = firestoreMod.getFirestore(app);
+    const storage = storageMod.getStorage(app);
+    const auth = authMod.getAuth(app);
+
+    firebaseInstance = {
+      app,
+      db,
+      storage,
+      auth,
+      firestore: firestoreMod,
+      storageMod,
+      authMod
+    };
+
+    console.log("[RBstore Firebase] ✅ Firebase SDK cargado exitosamente.");
+    return firebaseInstance;
+  } catch (err) {
+    console.warn("[RBstore Firebase] ⚠️ No se pudo cargar el SDK de Firebase (modo offline activo):", err.message);
+    return null;
+  }
+}
