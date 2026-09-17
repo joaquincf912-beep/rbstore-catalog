@@ -2028,7 +2028,14 @@ window.deleteCategory = deleteCategory;
 // UPDATE STATS & COUNTER ANIMATION
 function updateStats() {
   const countEl = document.getElementById("stat-productos");
-  if (countEl) countEl.innerText = products.length;
+  if (countEl) {
+    // El contador del hero anuncia un mínimo ("50+") hasta que el catálogo
+    // supere ese número: si hay 11 productos reales, se muestra "50+".
+    const minimo = parseInt(countEl.getAttribute("data-minimo") || "0", 10) || 0;
+    const total = Math.max(products.length, minimo);
+    countEl.setAttribute("data-count", total);
+    countEl.innerText = total + (countEl.getAttribute("data-suffix") || "");
+  }
 
   updateCategoryCounts();
 
@@ -2036,7 +2043,9 @@ function updateStats() {
   counters.forEach(el => {
     const target = parseInt(el.getAttribute("data-count"));
     if (!target) return;
-    const isBig = target > 50;
+    // El "+" se añade cuando el número es "grande" o cuando el elemento lo pide
+    // explícitamente con data-suffix (por ejemplo "50+").
+    const suffix = el.getAttribute("data-suffix") || (target > 50 ? "+" : "");
     const duration = 1200;
     const startTime = performance.now();
 
@@ -2044,11 +2053,11 @@ function updateStats() {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
       const current = Math.floor(progress * target);
-      el.innerText = isBig ? `${current}+` : `${current}`;
+      el.innerText = `${current}${suffix}`;
       if (progress < 1) {
         requestAnimationFrame(step);
       } else {
-        el.innerText = isBig ? `${target}+` : `${target}`;
+        el.innerText = `${target}${suffix}`;
       }
     }
     requestAnimationFrame(step);
