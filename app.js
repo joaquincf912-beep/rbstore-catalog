@@ -133,6 +133,12 @@ let isAdminLoggedIn = false;
 let firestoreProductsLoaded = false;
 let firestoreCategoriesLoaded = false;
 
+// BULLETPROOF STRING HELPERS (GUARDS AGAINST NULL / UNDEFINED / NON-STRING ERRORS)
+function safeStr(val) {
+  if (val === null || val === undefined) return "";
+  return String(val).toLowerCase().trim();
+}
+
 // SAFE DOM READY / IMMEDIATE EXECUTION
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initApp);
@@ -160,8 +166,6 @@ function initApp() {
 }
 
 // FIREBASE REALTIME FIRESTORE LISTENER (Productos + Categorías)
-// This is THE SINGLE SOURCE OF TRUTH. All visitors (including the owner) 
-// see data from Firestore in real-time merged with base catalog.
 async function initFirebaseSync() {
   const fb = await initFirebaseSDK();
   if (!fb) {
@@ -176,43 +180,60 @@ async function initFirebaseSync() {
     // 1. Productos Listener
     const q = query(collection(db, "productos"));
     onSnapshot(q, (snapshot) => {
-      const firestoreProducts = [];
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        firestoreProducts.push({
-          id: docSnap.id,
-          name: data.nombre || data.name || "Producto",
-          sector: (data.categoria || data.sector || "varios").toLowerCase().trim(),
-          price: Number(data.precio || data.price || 0),
-          oldPrice: (data.precioAnterior || data.oldPrice) ? Number(data.precioAnterior || data.oldPrice) : null,
-          badge: data.badge || "",
-          image: data.imagenUrl || data.image || "images/cargador_20w.jpg",
-          description: data.descripcion || data.description || ""
+      try {
+        const firestoreProducts = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() || {};
+          const rawName = data.nombre || data.name || "Producto";
+          const rawSector = data.categoria || data.sector || "varios";
+          const rawPrice = data.precio || data.price || 0;
+          const rawOldPrice = data.precioAnterior || data.oldPrice;
+          const rawImage = data.imagenUrl || data.image || "images/cargador_20w.jpg";
+          const rawDesc = data.descripcion || data.description || "";
+
+          firestoreProducts.push({
+            id: String(docSnap.id),
+            name: String(rawName),
+            sector: safeStr(rawSector) || "varios",
+            price: isNaN(Number(rawPrice)) ? 0 : Number(rawPrice),
+            oldPrice: (rawOldPrice !== null && rawOldPrice !== undefined && !isNaN(Number(rawOldPrice))) ? Number(rawOldPrice) : null,
+            badge: String(data.badge || ""),
+            image: String(rawImage),
+            description: String(rawDesc)
+          });
         });
-      });
 
-      // ALWAYS merge DEFAULT_PRODUCTS with firestoreProducts so base catalog is never lost
-      const productMap = new Map();
-      DEFAULT_PRODUCTS.forEach(p => productMap.set(p.id, p));
-      firestoreProducts.forEach(p => {
-        const existingKey = Array.from(productMap.keys()).find(k => 
-          k === p.id || productMap.get(k).name.toLowerCase() === p.name.toLowerCase()
-        );
-        if (existingKey) {
-          productMap.set(existingKey, p);
-        } else {
-          productMap.set(p.id, p);
+        // ALWAYS merge DEFAULT_PRODUCTS with firestoreProducts so base catalog is never lost
+        const productMap = new Map();
+        DEFAULT_PRODUCTS.forEach(p => productMap.set(String(p.id), p));
+        firestoreProducts.forEach(p => {
+          const pNameLower = safeStr(p.name);
+          const existingKey = Array.from(productMap.keys()).find(k => {
+            const item = productMap.get(k);
+            return k === p.id || (item && safeStr(item.name) === pNameLower);
+          });
+          if (existingKey) {
+            productMap.set(existingKey, p);
+          } else {
+            productMap.set(p.id, p);
+          }
+        });
+
+        const merged = Array.from(productMap.values());
+        if (merged && merged.length > 0) {
+          products = merged;
         }
-      });
-      products = Array.from(productMap.values());
-      firestoreProductsLoaded = true;
+        firestoreProductsLoaded = true;
 
-      renderCategoriesGrid();
-      renderSectorOptions();
-      renderProductsGrid();
-      renderAdminProductsTable();
-      updateStats();
-      console.log(`[RBstore Firebase] 🔥 ${products.length} productos listos (${firestoreProducts.length} en Firestore)`);
+        renderCategoriesGrid();
+        renderSectorOptions();
+        renderProductsGrid();
+        renderAdminProductsTable();
+        updateStats();
+        console.log(`[RBstore Firebase] 🔥 ${products.length} productos listos (${firestoreProducts.length} en Firestore)`);
+      } catch (err) {
+        console.error("[RBstore Firebase] Error procesando productos de Firestore:", err);
+      }
     }, (err) => {
       console.warn("[RBstore Firebase] Error en listener de productos:", err.message);
     });
@@ -220,37 +241,50 @@ async function initFirebaseSync() {
     // 2. Categorías Listener
     const catQuery = query(collection(db, "categorias"));
     onSnapshot(catQuery, (catSnapshot) => {
-      const firestoreCategories = [];
-      catSnapshot.forEach((cSnap) => {
-        const cData = cSnap.data();
-        firestoreCategories.push({
-          id: cSnap.id,
-          name: cData.name || cData.nombre || "Categoría",
-          icon: cData.icon || cData.icono || "📦"
+      try {
+        const firestoreCategories = [];
+        catSnapshot.forEach((cSnap) => {
+          const cData = cSnap.data() || {};
+          firestoreCategories.push({
+            id: String(cSnap.id),
+            name: String(cData.name || cData.nombre || "Categoría"),
+            icon: String(cData.icon || cData.icono || "📦")
+          });
         });
-      });
 
-      // ALWAYS merge DEFAULT_CATEGORIES with firestoreCategories (so defaults are NEVER wiped out)
-      const categoryMap = new Map();
-      DEFAULT_CATEGORIES.forEach(c => categoryMap.set(c.id, c));
-      firestoreCategories.forEach(c => {
-        const existingKey = Array.from(categoryMap.keys()).find(k => 
-          k === c.id || categoryMap.get(k).name.toLowerCase() === c.name.toLowerCase()
-        );
-        if (existingKey) {
-          categoryMap.set(existingKey, c);
-        } else {
-          categoryMap.set(c.id, c);
+        // ALWAYS merge DEFAULT_CATEGORIES with firestoreCategories (so defaults are NEVER wiped out)
+        const categoryMap = new Map();
+        DEFAULT_CATEGORIES.forEach(c => categoryMap.set(String(c.id), c));
+        firestoreCategories.forEach(c => {
+          const cNameLower = safeStr(c.name);
+          const existingKey = Array.from(categoryMap.keys()).find(k => {
+            const item = categoryMap.get(k);
+            return k === c.id || (item && safeStr(item.name) === cNameLower);
+          });
+          if (existingKey) {
+            categoryMap.set(existingKey, {
+              ...c,
+              id: existingKey // PRESERVE default category ID so product sector matching never breaks
+            });
+          } else {
+            categoryMap.set(c.id, c);
+          }
+        });
+
+        const mergedCat = Array.from(categoryMap.values());
+        if (mergedCat && mergedCat.length > 0) {
+          categories = mergedCat;
         }
-      });
-      categories = Array.from(categoryMap.values());
-      firestoreCategoriesLoaded = true;
+        firestoreCategoriesLoaded = true;
 
-      renderCategoriesGrid();
-      renderSectorOptions();
-      renderAdminCategoriesList();
-      renderProductsGrid();
-      console.log(`[RBstore Firebase] 🏠 ${categories.length} categorías listas (${firestoreCategories.length} en Firestore)`);
+        renderCategoriesGrid();
+        renderSectorOptions();
+        renderAdminCategoriesList();
+        renderProductsGrid();
+        console.log(`[RBstore Firebase] 🏠 ${categories.length} categorías listas (${firestoreCategories.length} en Firestore)`);
+      } catch (err) {
+        console.error("[RBstore Firebase] Error procesando categorías de Firestore:", err);
+      }
     }, (cErr) => {
       console.warn("[RBstore Firebase] Error en listener de categorías:", cErr.message);
     });
@@ -271,7 +305,6 @@ async function initFirebaseSync() {
   } catch(e) {
     console.error("[RBstore Firebase] Error en inicialización de sync:", e);
   }
-}
 }
 
 // LOAD CATEGORIES DATA
@@ -365,13 +398,19 @@ function renderCategoriesGrid() {
 
   // 2. Render each Category
   categories.forEach(cat => {
-    const count = products.filter(p => p.sector === cat.id).length;
+    const cid = safeStr(cat.id);
+    const cname = safeStr(cat.name);
+    const count = products.filter(p => {
+      const s = safeStr(p.sector);
+      return s === cid || s === cname || (s && cid && (s.includes(cid) || cid.includes(s)));
+    }).length;
+
     const card = document.createElement("button");
     card.className = `cat-card ${currentFilterSector === cat.id ? 'active' : ''}`;
     card.setAttribute("data-category", cat.id);
     card.innerHTML = `
       <div class="cat-card__icon">${cat.icon || '📦'}</div>
-      <div class="cat-card__name">${cat.name}</div>
+      <div class="cat-card__name">${cat.name || 'Categoría'}</div>
       <div class="cat-card__count">${count} productos</div>
     `;
     card.addEventListener("click", () => handleCategoryClick(cat.id, card));
@@ -384,7 +423,7 @@ function handleCategoryClick(sectorId, cardElement) {
   if (grid) {
     grid.querySelectorAll(".cat-card").forEach(c => c.classList.remove("active"));
   }
-  cardElement.classList.add("active");
+  if (cardElement) cardElement.classList.add("active");
   currentFilterSector = sectorId;
   renderProductsGrid();
 
@@ -403,7 +442,7 @@ function renderSectorOptions() {
   categories.forEach(cat => {
     const option = document.createElement("option");
     option.value = cat.id;
-    option.textContent = `${cat.icon || '📦'} ${cat.name}`;
+    option.textContent = `${cat.icon || '📦'} ${cat.name || 'Categoría'}`;
     select.appendChild(option);
   });
 
@@ -422,12 +461,26 @@ function renderProductsGrid() {
 
   grid.innerHTML = "";
 
+  const activeCategory = categories.find(c => safeStr(c.id) === safeStr(currentFilterSector));
+  const searchLower = safeStr(currentSearchTerm);
+  const targetId = safeStr(currentFilterSector);
+  const targetName = activeCategory ? safeStr(activeCategory.name) : "";
+
   const filtered = products.filter(product => {
-    const matchesSector = currentFilterSector === "todos" || product.sector === currentFilterSector;
-    const matchesSearch = !currentSearchTerm || 
-      product.name.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
-      product.sector.toLowerCase().includes(currentSearchTerm.toLowerCase());
+    let matchesSector = targetId === "todos" || targetId === "";
+    if (!matchesSector) {
+      const pSector = safeStr(product.sector);
+      matchesSector = pSector === targetId || (targetName && pSector === targetName) || (pSector && targetId && (pSector.includes(targetId) || targetId.includes(pSector)));
+    }
+
+    const pName = safeStr(product.name);
+    const pDesc = safeStr(product.description);
+    const pSector = safeStr(product.sector);
+
+    const matchesSearch = !searchLower || 
+      pName.includes(searchLower) ||
+      pDesc.includes(searchLower) ||
+      pSector.includes(searchLower);
     
     return matchesSector && matchesSearch;
   });
@@ -448,39 +501,44 @@ function renderProductsGrid() {
 function createProductCard(product, index) {
   const card = document.createElement("div");
   card.className = "product-card show";
-  card.setAttribute("data-category", product.sector);
-  card.setAttribute("data-product-id", product.id);
+  card.setAttribute("data-category", product.sector || "varios");
+  card.setAttribute("data-product-id", product.id || `p_${index}`);
   card.style.animationDelay = `${index * 0.05}s`;
 
   // Badge
   let badgeLabel = "";
   let badgeClass = "";
-  if (product.badge === "popular") { badgeLabel = "Más Vendido"; badgeClass = "product-card__badge--hot"; }
-  else if (product.badge === "nuevo") { badgeLabel = "Nuevo"; badgeClass = "product-card__badge--new"; }
-  else if (product.badge === "oferta") { badgeLabel = "Oferta"; badgeClass = "product-card__badge--sale"; }
-  else if (product.badge === "exclusivo") { badgeLabel = "Exclusivo"; badgeClass = "product-card__badge--hot"; }
-  else if (product.badge === "agotado") { badgeLabel = "Agotado"; badgeClass = "product-card__badge--soldout"; }
+  const b = safeStr(product.badge);
+  if (b === "popular") { badgeLabel = "Más Vendido"; badgeClass = "product-card__badge--hot"; }
+  else if (b === "nuevo") { badgeLabel = "Nuevo"; badgeClass = "product-card__badge--new"; }
+  else if (b === "oferta") { badgeLabel = "Oferta"; badgeClass = "product-card__badge--sale"; }
+  else if (b === "exclusivo") { badgeLabel = "Exclusivo"; badgeClass = "product-card__badge--hot"; }
+  else if (b === "agotado") { badgeLabel = "Agotado"; badgeClass = "product-card__badge--soldout"; }
 
   const badgeHtml = badgeLabel ? `<span class="product-card__badge ${badgeClass}">${badgeLabel}</span>` : "";
 
   // Prices
-  const formattedPrice = `$${Number(product.price).toFixed(0)}`;
-  const oldPriceHtml = product.oldPrice ? `<span class="product-card__price-old">$${Number(product.oldPrice).toFixed(0)}</span>` : "";
+  const numPrice = isNaN(Number(product.price)) ? 0 : Number(product.price);
+  const numOldPrice = (product.oldPrice && !isNaN(Number(product.oldPrice))) ? Number(product.oldPrice) : null;
+
+  const formattedPrice = `$${numPrice.toFixed(0)}`;
+  const oldPriceHtml = numOldPrice ? `<span class="product-card__price-old">$${numOldPrice.toFixed(0)}</span>` : "";
 
   // WhatsApp link
-  const waText = encodeURIComponent(`¡Hola RBstore! Estoy interesado en *${product.name}* (Precio: $${Number(product.price).toFixed(2)}). ¿Tienen disponibilidad?`);
+  const pName = product.name || "Producto";
+  const waText = encodeURIComponent(`¡Hola RBstore! Estoy interesado en *${pName}* (Precio: $${numPrice.toFixed(2)}). ¿Tienen disponibilidad?`);
   const waUrl = `https://wa.me/${RBSTORE_CONFIG.whatsappNumber}?text=${waText}`;
 
   card.innerHTML = `
     ${badgeHtml}
     <div class="product-card__img">
-      <img src="${product.image}" alt="${product.name}" loading="lazy" onerror="this.style.display='none'">
+      <img src="${product.image || 'images/cargador_20w.jpg'}" alt="${pName}" loading="lazy" onerror="this.src='images/cargador_20w.jpg'">
       <div class="product-card__img-overlay"></div>
     </div>
     <div class="product-card__body">
       <div class="product-card__category">${getSectorLabel(product.sector)}</div>
-      <h3 class="product-card__name" style="cursor:pointer;">${product.name}</h3>
-      <p class="product-card__desc">${product.description}</p>
+      <h3 class="product-card__name" style="cursor:pointer;">${pName}</h3>
+      <p class="product-card__desc">${product.description || ""}</p>
       <div class="product-card__footer">
         <div class="product-card__price-box">
           <span class="product-card__price">${formattedPrice}</span>
@@ -506,7 +564,8 @@ function createProductCard(product, index) {
 
 // SECTOR UTILITY
 function getSectorLabel(sectorKey) {
-  const cat = categories.find(c => c.id === sectorKey);
+  const sk = safeStr(sectorKey);
+  const cat = categories.find(c => safeStr(c.id) === sk || safeStr(c.name) === sk);
   if (cat) return cat.name;
 
   const map = {
@@ -515,7 +574,7 @@ function getSectorLabel(sectorKey) {
     audifonos: "Audífonos",
     varios: "Artículos Varios"
   };
-  return map[sectorKey] || "Tecnología";
+  return map[sk] || (sectorKey ? String(sectorKey) : "Tecnología");
 }
 
 // ═══════════════════════════════════════════════
@@ -588,7 +647,7 @@ function setupEventListeners() {
       if (searchInput) searchInput.value = "";
       if (clearSearchBtn) clearSearchBtn.style.display = "none";
 
-      categoryCards.forEach(c => c.classList.remove("active"));
+      document.querySelectorAll('.cat-card').forEach(c => c.classList.remove("active"));
       document.querySelector('.cat-card[data-category="todos"]')?.classList.add("active");
 
       renderProductsGrid();
@@ -918,8 +977,7 @@ async function handleProductFormSubmit(e) {
     badge: document.getElementById("prodBadge").value || "",
     imagenUrl: imageUrl || "images/cargador_20w.jpg",
     descripcion: document.getElementById("prodDesc").value.trim(),
-    disponible: true,
-    creadoEn: serverTimestamp()
+    disponible: true
   };
 
   const newProdLocal = {
