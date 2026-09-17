@@ -910,9 +910,56 @@ function editProduct(productId) {
 
 const IMGBB_API_KEY = "40941cfd13eaee31c9fa00c3b9dd2d52";
 
-async function uploadImageToImgBB(file) {
+// CLIENT-SIDE IMAGE COMPRESSOR (Reduces 10MB camera photos to crisp ~50KB JPEGs)
+function compressImageFile(file, maxWidth = 900, maxHeight = 900, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type.startsWith("image/")) {
+      reject(new Error("El archivo no es una imagen válida"));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        canvas.toBlob((blob) => {
+          resolve({ blob: blob || file, dataUrl });
+        }, "image/jpeg", quality);
+      };
+      img.onerror = () => reject(new Error("No se pudo procesar el formato de la imagen"));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error("Error al leer el archivo local"));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadImageToImgBB(fileOrBlob) {
   const formData = new FormData();
-  formData.append("image", file);
+  formData.append("image", fileOrBlob, "product_photo.jpg");
 
   const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
     method: "POST",
@@ -927,26 +974,59 @@ async function uploadImageToImgBB(file) {
   }
 }
 
+async function uploadImageToFirebaseStorage(fileOrBlob) {
+  const fb = await initFirebaseSDK();
+  if (!fb || !fb.storage || !fb.storageMod) throw new Error("Firebase Storage no inicializado");
+  const { storage, storageMod } = fb;
+  const { ref, uploadBytes, getDownloadURL } = storageMod;
+
+  const fileName = `productos/prod_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.jpg`;
+  const storageRef = ref(storage, fileName);
+  await uploadBytes(storageRef, fileOrBlob);
+  const downloadUrl = await getDownloadURL(storageRef);
+  return downloadUrl;
+}
+
 async function handleImageFileUpload(input) {
-  if (input.files && input.files[0]) {
-    const file = input.files[0];
-    showToast("📤 Subiendo foto a servidor gratuito de ImgBB...");
+  if (!input || !input.files || !input.files[0]) return;
+  const rawFile = input.files[0];
+
+  try {
+    showToast("⚡ Optimizando imagen para carga ultrarrápida...");
+    const { blob, dataUrl } = await compressImageFile(rawFile, 900, 900, 0.75);
+
+    showToast("📤 Subiendo imagen a la nube...");
+
+    // 1. Intento con ImgBB
     try {
-      const url = await uploadImageToImgBB(file);
+      const url = await uploadImageToImgBB(blob);
       document.getElementById("prodImage").value = url;
       showToast("✅ Imagen alojada exitosamente en ImgBB");
-    } catch(err) {
-      console.error("Error ImgBB:", err);
-      showToast("⚠️ Falló subida a ImgBB, optimizando localmente...");
-      
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        document.getElementById("prodImage").value = e.target.result;
-      };
-      reader.readAsDataURL(file);
+      return;
+    } catch (err1) {
+      console.warn("[ImgBB Falló] Intentando Firebase Storage...", err1);
     }
+
+    // 2. Intento con Firebase Storage
+    try {
+      const url = await uploadImageToFirebaseStorage(blob);
+      document.getElementById("prodImage").value = url;
+      showToast("✅ Imagen alojada exitosamente en Firebase Storage");
+      return;
+    } catch (err2) {
+      console.warn("[Firebase Storage Falló] Usando imagen optimizada en base64...", err2);
+    }
+
+    // 3. Respaldo Local Base64 Ultra-Liviano (~50KB)
+    document.getElementById("prodImage").value = dataUrl;
+    showToast("✅ Imagen procesada localmente (~50KB)");
+  } catch (err) {
+    console.error("Error procesando imagen:", err);
+    showToast("⚠️ Error procesando la imagen: " + err.message);
   }
 }
+
+window.handleImageFileUpload = handleImageFileUpload;
 
 async function handleProductFormSubmit(e) {
   e.preventDefault();
@@ -956,16 +1036,19 @@ async function handleProductFormSubmit(e) {
 
   let imageUrl = document.getElementById("prodImage").value.trim();
 
-  // Upload file to ImgBB if selected and not yet uploaded
+  // Si hay archivo cargado y aún no se ha convertido a URL remota
   if (file && (!imageUrl || !imageUrl.startsWith("http"))) {
     try {
-      showToast("📤 Subiendo foto a ImgBB...");
-      imageUrl = await uploadImageToImgBB(file);
+      showToast("⚡ Procesando imagen...");
+      const { blob, dataUrl } = await compressImageFile(file, 900, 900, 0.75);
+      try {
+        imageUrl = await uploadImageToImgBB(blob);
+      } catch (errImg) {
+        imageUrl = dataUrl;
+      }
       document.getElementById("prodImage").value = imageUrl;
-      showToast("✅ Imagen alojada gratuitamente en ImgBB");
     } catch(err) {
-      console.error("Error subiendo a ImgBB:", err);
-      showToast("⚠️ Usando imagen actual: " + err.message);
+      console.error("Error procesando imagen en submit:", err);
     }
   }
 
