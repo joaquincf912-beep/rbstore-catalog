@@ -966,6 +966,8 @@ function editProduct(productId) {
   document.getElementById("adminFormContainer").scrollIntoView({ behavior: "smooth" });
 }
 
+window.editProduct = editProduct;
+
 const IMGBB_API_KEY = "40941cfd13eaee31c9fa00c3b9dd2d52";
 
 // CLIENT-SIDE IMAGE COMPRESSOR (Reduces 10MB camera photos to crisp ~50KB images, preserving PNG transparency)
@@ -1130,8 +1132,10 @@ async function handleProductFormSubmit(e) {
     disponible: true
   };
 
+  const targetId = editId || `rb_${Date.now()}`;
+
   const newProdLocal = {
-    id: editId || `rb_${Date.now()}`,
+    id: targetId,
     name: prodData.nombre,
     sector: prodData.categoria,
     price: prodData.precio,
@@ -1141,37 +1145,38 @@ async function handleProductFormSubmit(e) {
     description: prodData.descripcion
   };
 
-  // Firestore save
-  try {
-    const fb = await initFirebaseSDK();
-    if (fb) {
-      const { db, firestore } = fb;
-      const { addDoc, updateDoc, collection, doc, serverTimestamp } = firestore;
-      prodData.creadoEn = serverTimestamp();
-
-      if (editId && editId.length > 10) {
-        await updateDoc(doc(db, "productos", editId), prodData);
-        showToast("🔥 Producto actualizado en Firestore");
-      } else {
-        await addDoc(collection(db, "productos"), prodData);
-        showToast("🔥 Producto guardado en Firestore en tiempo real");
-      }
-    }
-  } catch(err) {
-    console.error("Error guardando en Firestore:", err);
-    if (editId) {
-      const idx = products.findIndex(p => p.id === editId);
-      if (idx !== -1) products[idx] = newProdLocal;
+  // 1. Update local memory IMMEDIATELY for zero-lag UI response
+  if (editId) {
+    const idx = products.findIndex(p => p.id === editId);
+    if (idx !== -1) {
+      products[idx] = newProdLocal;
     } else {
       products.unshift(newProdLocal);
     }
-    saveCatalogData();
+  } else {
+    products.unshift(newProdLocal);
   }
 
+  saveCatalogData();
   renderProductsGrid();
   renderAdminProductsTable();
   hideProductForm();
   updateStats();
+
+  // 2. Save / Update in Cloud Firestore with merge (works for ALL IDs: base & custom)
+  try {
+    const fb = await initFirebaseSDK();
+    if (fb) {
+      const { db, firestore } = fb;
+      const { setDoc, doc, serverTimestamp } = firestore;
+      prodData.creadoEn = serverTimestamp();
+
+      await setDoc(doc(db, "productos", targetId), prodData, { merge: true });
+      showToast("🔥 Producto guardado y actualizado en la nube");
+    }
+  } catch(err) {
+    console.warn("Aviso: Producto guardado localmente.", err);
+  }
 }
 
 async function deleteProduct(productId) {
@@ -1203,6 +1208,8 @@ async function deleteProduct(productId) {
     }
   }
 }
+
+window.deleteProduct = deleteProduct;
 
 async function seedInitialDataToFirestore() {
   if (!confirm("¿Deseas subir los productos actuales a tu Firestore en Firebase?")) return;
@@ -1373,6 +1380,8 @@ async function deleteCategory(catId) {
     }
   }
 }
+
+window.deleteCategory = deleteCategory;
 
 // UPDATE STATS & COUNTER ANIMATION
 function updateStats() {
