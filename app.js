@@ -953,7 +953,7 @@ function editProduct(productId) {
 
   renderSectorOptions();
   showAddProductForm();
-  document.getElementById("formTitle").innerText = `Editar Producto #${p.id}`;
+  document.getElementById("formTitle").innerText = `Editar Producto: ${p.name}`;
   document.getElementById("editProductId").value = p.id;
   document.getElementById("prodName").value = p.name;
   document.getElementById("prodSector").value = p.sector;
@@ -962,6 +962,9 @@ function editProduct(productId) {
   document.getElementById("prodBadge").value = p.badge || "";
   document.getElementById("prodImage").value = p.image;
   document.getElementById("prodDesc").value = p.description;
+
+  const fileInput = document.getElementById("prodFileInput");
+  if (fileInput) fileInput.value = "";
 
   document.getElementById("adminFormContainer").scrollIntoView({ behavior: "smooth" });
 }
@@ -1062,7 +1065,7 @@ async function handleImageFileUpload(input) {
 
   try {
     showToast("⚡ Optimizando imagen para carga ultrarrápida...");
-    const { blob, dataUrl } = await compressImageFile(rawFile, 900, 900, 0.75);
+    const { blob, dataUrl } = await compressImageFile(rawFile, 1000, 1000, 0.8);
 
     showToast("📤 Subiendo imagen a la nube...");
 
@@ -1105,15 +1108,19 @@ async function handleProductFormSubmit(e) {
 
   let imageUrl = document.getElementById("prodImage").value.trim();
 
-  // Si hay archivo cargado y aún no se ha convertido a URL remota
-  if (file && (!imageUrl || !imageUrl.startsWith("http"))) {
+  // Si el usuario seleccionó un nuevo archivo, SIEMPRE procesar y reemplazar la imagen anterior
+  if (file) {
     try {
-      showToast("⚡ Procesando imagen...");
-      const { blob, dataUrl } = await compressImageFile(file, 900, 900, 0.75);
+      showToast("⚡ Procesando nueva imagen...");
+      const { blob, dataUrl } = await compressImageFile(file, 1000, 1000, 0.8);
       try {
         imageUrl = await uploadImageToImgBB(blob);
       } catch (errImg) {
-        imageUrl = dataUrl;
+        try {
+          imageUrl = await uploadImageToFirebaseStorage(blob);
+        } catch (errFb) {
+          imageUrl = dataUrl;
+        }
       }
       document.getElementById("prodImage").value = imageUrl;
     } catch(err) {
