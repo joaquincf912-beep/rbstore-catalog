@@ -135,93 +135,103 @@ let currentSearchTerm = "";
 let selectedProduct = null;
 let selectedQuantity = 1;
 let isAdminLoggedIn = false;
+let firestoreProductsLoaded = false;
+let firestoreCategoriesLoaded = false;
 
 // DOM READY
 document.addEventListener("DOMContentLoaded", () => {
   initApp();
 });
 
-async function initApp() {
-  const remoteOk = await loadRemoteCatalogData();
-  if (!remoteOk) {
-    loadCategoriesData();
-    loadCatalogData();
-  }
+function initApp() {
+  // 1. Load defaults as IMMEDIATE placeholder while Firestore connects
+  categories = [...DEFAULT_CATEGORIES];
+  products = [...DEFAULT_PRODUCTS];
+
+  // 2. Render the UI with defaults right away so user sees something
   renderCategoriesGrid();
   renderSectorOptions();
   renderProductsGrid();
   setupEventListeners();
   setupScrollEffects();
   updateStats();
-  
-  // Start Firebase Firestore Realtime Sync
+
+  // 3. Start Firebase Firestore Realtime Sync — THIS is the real data source
   initFirebaseSync();
 
-  console.log(`[RBstore] Catálogo cargado: ${products.length} productos, ${categories.length} categorías`);
+  console.log(`[RBstore] App inicializada, esperando datos de Firestore...`);
 }
 
 // FIREBASE REALTIME FIRESTORE LISTENER (Productos + Categorías)
+// This is THE SINGLE SOURCE OF TRUTH. All visitors (including the owner) 
+// see data from Firestore in real-time.
 function initFirebaseSync() {
   try {
     // 1. Productos Listener
     const q = query(collection(db, "productos"));
     onSnapshot(q, (snapshot) => {
-      if (!snapshot.empty) {
-        const firestoreProducts = [];
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          firestoreProducts.push({
-            id: docSnap.id,
-            name: data.nombre || data.name || "Producto",
-            sector: data.categoria || data.sector || "varios",
-            price: Number(data.precio || data.price || 0),
-            oldPrice: data.precioAnterior || data.oldPrice ? Number(data.precioAnterior || data.oldPrice) : null,
-            badge: data.badge || "",
-            image: data.imagenUrl || data.image || "images/cargador_20w.jpg",
-            description: data.descripcion || data.description || ""
-          });
+      const firestoreProducts = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        firestoreProducts.push({
+          id: docSnap.id,
+          name: data.nombre || data.name || "Producto",
+          sector: (data.categoria || data.sector || "varios").toLowerCase(),
+          price: Number(data.precio || data.price || 0),
+          oldPrice: (data.precioAnterior || data.oldPrice) ? Number(data.precioAnterior || data.oldPrice) : null,
+          badge: data.badge || "",
+          image: data.imagenUrl || data.image || "images/cargador_20w.jpg",
+          description: data.descripcion || data.description || ""
         });
+      });
 
+      if (firestoreProducts.length > 0) {
         products = firestoreProducts;
+        firestoreProductsLoaded = true;
         renderCategoriesGrid();
         renderSectorOptions();
         renderProductsGrid();
         renderAdminProductsTable();
         updateStats();
         console.log(`[RBstore Firebase] 🔥 ${products.length} productos sincronizados en tiempo real desde Firestore`);
+      } else if (!firestoreProductsLoaded) {
+        // Firestore collection is empty — keep showing defaults
+        console.log("[RBstore Firebase] Colección 'productos' vacía en Firestore. Mostrando productos por defecto.");
       }
     }, (err) => {
-      console.log("[RBstore Firebase] Firestore productos listener status:", err.message);
+      console.warn("[RBstore Firebase] Error en listener de productos:", err.message);
+      console.log("[RBstore Firebase] Usando productos por defecto como fallback.");
     });
 
     // 2. Categorías Listener
     const catQuery = query(collection(db, "categorias"));
     onSnapshot(catQuery, (catSnapshot) => {
-      if (!catSnapshot.empty) {
-        const firestoreCategories = [];
-        catSnapshot.forEach((cSnap) => {
-          const cData = cSnap.data();
-          firestoreCategories.push({
-            id: cSnap.id,
-            name: cData.name || cData.nombre || "Categoría",
-            icon: cData.icon || cData.icono || "📦"
-          });
+      const firestoreCategories = [];
+      catSnapshot.forEach((cSnap) => {
+        const cData = cSnap.data();
+        firestoreCategories.push({
+          id: cSnap.id,
+          name: cData.name || cData.nombre || "Categoría",
+          icon: cData.icon || cData.icono || "📦"
         });
+      });
 
-        if (firestoreCategories.length > 0) {
-          categories = firestoreCategories;
-          renderCategoriesGrid();
-          renderSectorOptions();
-          renderAdminCategoriesList();
-          console.log(`[RBstore Firebase] 🏠 ${categories.length} categorías sincronizadas en tiempo real desde Firestore`);
-        }
+      if (firestoreCategories.length > 0) {
+        categories = firestoreCategories;
+        firestoreCategoriesLoaded = true;
+        renderCategoriesGrid();
+        renderSectorOptions();
+        renderAdminCategoriesList();
+        console.log(`[RBstore Firebase] 🏠 ${categories.length} categorías sincronizadas en tiempo real desde Firestore`);
+      } else if (!firestoreCategoriesLoaded) {
+        console.log("[RBstore Firebase] Colección 'categorias' vacía en Firestore. Mostrando categorías por defecto.");
       }
     }, (cErr) => {
-      console.log("[RBstore Firebase] Firestore categorias listener status:", cErr.message);
+      console.warn("[RBstore Firebase] Error en listener de categorías:", cErr.message);
     });
 
   } catch(e) {
-    console.log("[RBstore Firebase] Firestore setup:", e);
+    console.error("[RBstore Firebase] Error inicializando Firestore:", e);
   }
 
   onAuthStateChanged(auth, (user) => {
@@ -236,40 +246,6 @@ function initFirebaseSync() {
       }
     }
   });
-}
-
-// FETCH REMOTE CATALOG.JSON (Single source of truth for all visitors)
-async function loadRemoteCatalogData() {
-  const hasLocalEdits = localStorage.getItem("rbstore_owner_has_local_edits") === "true";
-
-  try {
-    const res = await fetch(`catalog.json?v=${Date.now()}`);
-    if (res.ok) {
-      const data = await res.json();
-      
-      let updated = false;
-      if (!hasLocalEdits && data.products && Array.isArray(data.products) && data.products.length > 0) {
-        products = data.products;
-        localStorage.setItem(RBSTORE_CONFIG.storageKey, JSON.stringify(products));
-        DEFAULT_PRODUCTS.length = 0;
-        DEFAULT_PRODUCTS.push(...data.products);
-        updated = true;
-      }
-      if (!hasLocalEdits && data.categories && Array.isArray(data.categories) && data.categories.length > 0) {
-        categories = data.categories;
-        localStorage.setItem("rbstore_categories_v2", JSON.stringify(categories));
-        DEFAULT_CATEGORIES.length = 0;
-        DEFAULT_CATEGORIES.push(...data.categories);
-        updated = true;
-      }
-      
-      console.log(`[RBstore] Catálogo remoto sincronizado: ${products.length} productos, ${categories.length} categorías`);
-      return updated;
-    }
-  } catch(e) {
-    console.log("[RBstore] Usando catálogo local predeterminado");
-  }
-  return false;
 }
 
 // LOAD CATEGORIES DATA
@@ -447,6 +423,7 @@ function createProductCard(product, index) {
   const card = document.createElement("div");
   card.className = "product-card show";
   card.setAttribute("data-category", product.sector);
+  card.setAttribute("data-product-id", product.id);
   card.style.animationDelay = `${index * 0.05}s`;
 
   // Badge
@@ -470,13 +447,13 @@ function createProductCard(product, index) {
 
   card.innerHTML = `
     ${badgeHtml}
-    <div class="product-card__img" onclick="openProductModal('${product.id}')">
+    <div class="product-card__img">
       <img src="${product.image}" alt="${product.name}" loading="lazy" onerror="this.style.display='none'">
       <div class="product-card__img-overlay"></div>
     </div>
     <div class="product-card__body">
       <div class="product-card__category">${getSectorLabel(product.sector)}</div>
-      <h3 class="product-card__name" onclick="openProductModal('${product.id}')" style="cursor:pointer;">${product.name}</h3>
+      <h3 class="product-card__name" style="cursor:pointer;">${product.name}</h3>
       <p class="product-card__desc">${product.description}</p>
       <div class="product-card__footer">
         <div class="product-card__price-box">
@@ -490,6 +467,13 @@ function createProductCard(product, index) {
       </div>
     </div>
   `;
+
+  // Safe click handlers using addEventListener (not inline onclick)
+  const imgDiv = card.querySelector(".product-card__img");
+  const nameEl = card.querySelector(".product-card__name");
+  const openModal = () => openProductModal(product.id);
+  if (imgDiv) imgDiv.addEventListener("click", openModal);
+  if (nameEl) nameEl.addEventListener("click", openModal);
 
   return card;
 }
@@ -1194,6 +1178,7 @@ window.hideProductForm = hideProductForm;
 window.editProduct = editProduct;
 window.deleteProduct = deleteProduct;
 window.handleImageFileUpload = handleImageFileUpload;
+window.openProductModal = openProductModal;
 
 // ═══════════════════════════════════════════════
 // CATALOG EXPORT / IMPORT / COPY FUNCTIONS
