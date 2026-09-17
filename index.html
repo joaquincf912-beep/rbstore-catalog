@@ -9,7 +9,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="style.css?v=67.0">
+  <link rel="stylesheet" href="style.css?v=68.0">
 </head>
 <body>
 
@@ -307,7 +307,9 @@
           <button id="btnToggleCategoryForm" class="btn btn--secondary" style="background: rgba(61, 139, 253, 0.15); color: var(--accent-bright); border: 1px solid var(--border-accent);">+ Nueva Categoría</button>
           <button id="btnResetDefaultCatalog" class="btn btn--outline" style="color: #ef4444; border-color: rgba(239,68,68,0.3);">Restablecer</button>
           <button id="btnSyncPending" class="btn btn--secondary" style="display: none; background: rgba(250, 204, 21, 0.15); color: #facc15; border: 1px solid rgba(250, 204, 21, 0.35);">⏳ Sincronizar pendientes (0)</button>
+          <button id="btnSecurityCheck" class="btn btn--secondary" onclick="checkFirestoreSecurity()" title="Comprueba si alguien más puede escribir en tu catálogo">🛡️ Comprobar seguridad</button>
         </div>
+        <div id="adminSecurityResult" style="display: none; margin-top: 12px; padding: 12px 14px; border-radius: 10px; font-size: 0.84rem; line-height: 1.5;"></div>
 
         <!-- Add Category Form (hidden by default) -->
         <div id="adminCategoryFormContainer" style="display: none; background: var(--bg-card); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-accent); margin-top: 16px; margin-bottom: 20px;">
@@ -389,6 +391,6 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
   </button>
 
-  <script type="module" src="app.js?v=67.0"></script>
+  <script type="module" src="app.js?v=68.0"></script>
 </body>
 </html>

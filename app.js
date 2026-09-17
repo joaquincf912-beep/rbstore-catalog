@@ -157,6 +157,33 @@ function addDeletedProductId(id, name) {
   } catch(e) {}
 }
 
+// Al VOLVER a crear algo cuyo id o nombre estaban marcados como borrados, hay
+// que quitar esa marca. Si no, el merge contra Firestore lo excluye y el
+// producto/categoría queda invisible aunque se haya guardado bien en la nube.
+function removeDeletedProductRecord(id, name) {
+  try {
+    const idStr = id ? String(id) : "";
+    const nameStr = name ? safeStr(name) : "";
+    const list = getDeletedProductIds().filter(x => {
+      const v = String(x);
+      return v !== idStr && v !== nameStr;
+    });
+    localStorage.setItem("rbstore_deleted_product_ids", JSON.stringify(list));
+  } catch(e) {}
+}
+
+function removeDeletedCategoryRecord(id, name) {
+  try {
+    const idStr = id ? String(id) : "";
+    const nameStr = name ? safeStr(name) : "";
+    const list = getDeletedCategoryIds().filter(x => {
+      const v = String(x);
+      return v !== idStr && v !== nameStr;
+    });
+    localStorage.setItem("rbstore_deleted_category_ids", JSON.stringify(list));
+  } catch(e) {}
+}
+
 function getDeletedCategoryIds() {
   try {
     const saved = localStorage.getItem("rbstore_deleted_category_ids");
@@ -1134,6 +1161,81 @@ async function cloudLogout() {
 
 window.cloudLogout = cloudLogout;
 
+// ─────────────────────────────────────────────────────────────
+// Comprobación de seguridad de un clic: reproduce EXACTAMENTE
+// lo que puede hacer un visitante anónimo (sin tu sesión) y avisa
+// si el catálogo sigue abierto a escrituras ajenas.
+// ─────────────────────────────────────────────────────────────
+function pintarResultadoSeguridad(color, fondo, texto) {
+  const box = document.getElementById("adminSecurityResult");
+  if (!box) return;
+  box.style.display = "block";
+  box.style.background = fondo;
+  box.style.border = "1px solid " + color + "66";
+  box.style.color = color;
+  box.innerHTML = texto;
+}
+
+async function checkFirestoreSecurity() {
+  const btn = document.getElementById("btnSecurityCheck");
+  if (btn) btn.disabled = true;
+  pintarResultadoSeguridad("#cbd5e1", "rgba(148,163,184,0.12)", "Comprobando si un visitante puede escribir en tu catálogo...");
+
+  let checkApp = null;
+  try {
+    const fb = await initFirebaseSDK();
+    if (!fb) throw new Error("Sin conexión con Firebase");
+
+    const [appMod, fsMod] = await Promise.all([
+      import("https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js")
+    ]);
+
+    // Instancia aparte y SIN sesión: aquí no vale estar logueado,
+    // es la prueba honesta de lo que ve tu cliente o un desconocido.
+    checkApp = appMod.initializeApp(fb.app.options, "rbstore_security_check");
+    const checkDb = fsMod.getFirestore(checkApp);
+
+    // Sonda segura: intentamos borrar un documento que NO existe en tus
+    // colecciones reales. Si las reglas están abiertas, el borrado se acepta
+    // (y no pasa nada: ese documento no existe). Si están cerradas, responde
+    // permission-denied. Así no se crea ni se destruye ningún dato de verdad.
+    const sondaEscritura = async (coleccion) => {
+      const id = "sonda_seguridad_" + Date.now() + "_" + Math.floor(Math.random() * 1e6);
+      try {
+        await fsMod.deleteDoc(fsMod.doc(checkDb, coleccion, id));
+        return true; // un anónimo PUDO escribir
+      } catch (err) {
+        const code = (String((err && err.code) || "") + " " + String((err && err.message) || "")).toLowerCase();
+        if (code.includes("permission-denied") || code.includes("insufficient") || code.includes("unauthorized")) return false;
+        if (code.includes("not-found")) return true; // llegó al dato: la regla lo permitió
+        throw err;
+      }
+    };
+
+    const abiertos = [];
+    if (await sondaEscritura("productos")) abiertos.push("productos");
+    if (await sondaEscritura("categorias")) abiertos.push("categorías");
+
+    if (abiertos.length > 0) {
+      pintarResultadoSeguridad("#f87171", "rgba(239,68,68,0.15)",
+        "🔴 <strong>TU CATÁLOGO ESTÁ ABIERTO</strong> (" + abiertos.join(" y ") + "): un visitante cualquiera puede agregar o borrar productos desde su navegador.<br>" +
+        "Arréglalo así: Firebase Console → Firestore Database → pestaña <strong>Reglas</strong> → borra todo, pega el archivo <em>firestore.rules</em> y pulsa <strong>Publicar</strong>.");
+    } else {
+      pintarResultadoSeguridad("#4ade80", "rgba(74,222,128,0.12)",
+        "🟢 <strong>Protegido.</strong> Un visitante sin tu sesión NO puede escribir tu catálogo: los productos solo los cambias tú.");
+    }
+  } catch (err) {
+    console.warn("[RBstore Seguridad] No se pudo completar la comprobación:", err);
+    pintarResultadoSeguridad("#facc15", "rgba(250,204,21,0.12)",
+      "⚠️ No se pudo comprobar (" + ((err && err.message) || "error") + "). Revisa tu conexión e inténtalo de nuevo.");
+  } finally {
+    if (btn) btn.disabled = false;
+    if (checkApp) { try { const m = await import("https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js"); await m.deleteApp(checkApp); } catch (e) {} }
+  }
+}
+window.checkFirestoreSecurity = checkFirestoreSecurity;
+
 function authErrorMessage(err) {
   const code = String((err && err.code) || "") + " " + String((err && err.message) || "");
   if (code.includes("invalid-credential") || code.includes("wrong-password") || code.includes("user-not-found")) {
@@ -1597,6 +1699,20 @@ async function saveProductFromForm(e) {
 
   const targetId = editId || `rb_${Date.now()}`;
 
+  // El producto vuelve a estar vigente: si su id o su nombre figuraban como
+  // "borrados", se quitan de esa lista (si no, quedaría oculto para siempre
+  // aunque estuviera publicado en la nube).
+  removeDeletedProductRecord(targetId, prodData.nombre);
+
+  // Y si arrastraba un borrado pendiente con ese id o nombre, ya no aplica.
+  const borradosPendientes = getPendingDeletes();
+  const borradosVigentes = borradosPendientes.filter(
+    x => String(x.id) !== String(targetId) && safeStr(x.name) !== safeStr(prodData.nombre)
+  );
+  if (borradosVigentes.length !== borradosPendientes.length) {
+    writeJSONArray(PENDING_DELETES_KEY, borradosVigentes);
+  }
+
   const newProdLocal = {
     id: targetId,
     name: prodData.nombre,
@@ -1750,6 +1866,10 @@ async function handleCategoryFormSubmit(e) {
     showToast("Esta categoría ya existe");
     return;
   }
+
+  // Si esta categoría existió y se borró, su marca se elimina para que la
+  // nueva vuelva a verse (mismo caso que en productos).
+  removeDeletedCategoryRecord(catId, name);
 
   const newCat = { id: catId, name, icon };
   categories.push(newCat);

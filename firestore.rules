@@ -1,42 +1,33 @@
 rules_version = '2';
 
 // ═══════════════════════════════════════════════════════════════
-// RBstore — Reglas de seguridad de Firestore (DEFINITIVAS)
-// Proyecto: rbstore-a959f
+// RBstore — Reglas de seguridad de Firestore (DEFINITIVAS / versión estricta)
+// Proyecto: rbstore-a959f   ·   Dueño: rrodriguezcesar00@gmail.com
+// Actualizado: 17/09/2026
 //
 // QUÉ HACEN:
 //   · Cualquier visitante PUEDE LEER el catálogo (la tienda funciona).
-//   · SOLO un usuario con sesión de Firebase Auth PUEDE ESCRIBIR.
-//     Sin sesión, Firestore rechaza cualquier cambio (adiós vandalismo).
+//   · SOLO tu cuenta (rrodriguezcesar00@gmail.com) PUEDE ESCRIBIR.
+//     Ni un anónimo ni una cuenta nueva inventada pueden tocar el catálogo.
 //
 // CÓMO APLICAR:
 //   Firebase Console → Firestore Database → pestaña "Reglas"
 //   → borra todo, pega este archivo → Publicar.
 //
-// ANTES DE PUBLICAR (obligatorio, o tu panel no podrá guardar):
-//   Firebase Console → Authentication → Users → Add user:
-//     correo: el tuyo   ·   contraseña: la que quieras
-//   En el sitio: Panel Dueño → escribe ese correo y esa contraseña.
+// RECORDATORIO: en el sitio, entra al Panel Dueño con tu correo y tu
+// contraseña (no con la clave 2828) para que tus cambios se publiquen.
 // ═══════════════════════════════════════════════════════════════
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Solo cuentas ya creadas por ti (no hay registro público abierto).
+    // Único dueño autorizado. Comparación en minúsculas para evitar
+    // problemas de mayúsculas/minúsculas.
     function esDueno() {
-      return request.auth != null;
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() == 'rrodriguezcesar00@gmail.com';
     }
-
-    // ── OPCIÓN MÁS ESTRICTA (recomendada) ──────────────────────
-    // Descomenta estas 3 líneas y escribe tu correo para que
-    // SOLO esa cuenta pueda escribir, aunque alguien más se
-    // registrara en tu proyecto:
-    //
-    // function esDueno() {
-    //   return request.auth != null
-    //     && request.auth.token.email == 'TU_CORREO@AQUI.COM';
-    // }
-    // ───────────────────────────────────────────────────────────
 
     // Catálogo de productos
     match /productos/{productId} {
