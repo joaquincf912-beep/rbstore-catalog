@@ -1186,15 +1186,17 @@ async function checkFirestoreSecurity() {
     const fb = await initFirebaseSDK();
     if (!fb) throw new Error("Sin conexión con Firebase");
 
-    const [appMod, fsMod] = await Promise.all([
+    const [appMod, fsMod, secAuthMod] = await Promise.all([
       import("https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js"),
-      import("https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js")
+      import("https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js"),
+      import("https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js")
     ]);
 
     // Instancia aparte y SIN sesión: aquí no vale estar logueado,
     // es la prueba honesta de lo que ve tu cliente o un desconocido.
     checkApp = appMod.initializeApp(fb.app.options, "rbstore_security_check");
     const checkDb = fsMod.getFirestore(checkApp);
+    const checkAuth = secAuthMod.getAuth(checkApp);
 
     // Sonda segura: intentamos borrar un documento que NO existe en tus
     // colecciones reales. Si las reglas están abiertas, el borrado se acepta
@@ -1213,18 +1215,77 @@ async function checkFirestoreSecurity() {
       }
     };
 
+    // Sonda de lectura: ¿la tienda se puede LEER sin sesión? Si las reglas lo
+    // niegan, tus clientes no ven las categorías de la nube (usan las de reserva).
+    const sondaLectura = async (coleccion) => {
+      try {
+        await fsMod.getDocs(fsMod.query(fsMod.collection(checkDb, coleccion), fsMod.limit(1)));
+        return true;
+      } catch (err) {
+        const code = (String((err && err.code) || "") + " " + String((err && err.message) || "")).toLowerCase();
+        if (code.includes("permission-denied") || code.includes("insufficient") || code.includes("unauthorized")) return false;
+        throw err;
+      }
+    };
+
     const abiertos = [];
     if (await sondaEscritura("productos")) abiertos.push("productos");
     if (await sondaEscritura("categorias")) abiertos.push("categorías");
 
-    if (abiertos.length > 0) {
-      pintarResultadoSeguridad("#f87171", "rgba(239,68,68,0.15)",
-        "🔴 <strong>TU CATÁLOGO ESTÁ ABIERTO</strong> (" + abiertos.join(" y ") + "): un visitante cualquiera puede agregar o borrar productos desde su navegador.<br>" +
-        "Arréglalo así: Firebase Console → Firestore Database → pestaña <strong>Reglas</strong> → borra todo, pega el archivo <em>firestore.rules</em> y pulsa <strong>Publicar</strong>.");
-    } else {
-      pintarResultadoSeguridad("#4ade80", "rgba(74,222,128,0.12)",
-        "🟢 <strong>Protegido.</strong> Un visitante sin tu sesión NO puede escribir tu catálogo: los productos solo los cambias tú.");
+    const ilegibles = [];
+    if (!(await sondaLectura("productos"))) ilegibles.push("productos");
+    if (!(await sondaLectura("categorias"))) ilegibles.push("categorías");
+
+    // Sonda de cuenta intrusa: crea una cuenta cualquiera (y la borra en el acto)
+    // para saber si una regla del tipo "solo usuarios logueados" deja la puerta abierta.
+    let intruso = null;
+    let intrusoNota = "";
+    let sondaUser = null;
+    try {
+      const mail = "sonda." + Date.now() + "@example.com";
+      const pass = "Sonda" + Math.random().toString(36).slice(2, 10) + "9";
+      const cred = await secAuthMod.createUserWithEmailAndPassword(checkAuth, mail, pass);
+      sondaUser = cred.user;
+      intruso = await sondaEscritura("productos");
+      await secAuthMod.deleteUser(sondaUser);
+      sondaUser = null;
+      try { await secAuthMod.signOut(checkAuth); } catch (e) {}
+    } catch (err) {
+      const code = (String((err && err.code) || "") + " " + String((err && err.message) || "")).toLowerCase();
+      if (code.includes("operation-not-allowed")) {
+        intrusoNota = "El registro público de cuentas está desactivado (eso está bien).";
+      } else {
+        intrusoNota = "No se pudo comprobar si una cuenta inventada podría escribir.";
+      }
+    } finally {
+      if (sondaUser) { try { await secAuthMod.deleteUser(sondaUser); } catch (e) {} }
     }
+
+    const reglasBuenas = (abiertos.length === 0 && ilegibles.length === 0 && intruso !== true);
+
+    if (reglasBuenas) {
+      pintarResultadoSeguridad("#4ade80", "rgba(74,222,128,0.12)",
+        "🟢 <strong>Todo protegido.</strong> Nadie sin tu correo puede escribir tu catálogo, ni siquiera una cuenta inventada, y tus clientes leen productos y categorías sin problema. " +
+        (intrusoNota ? "<em>" + intrusoNota + "</em>" : ""));
+      return;
+    }
+
+    const fallos = [];
+    if (abiertos.length > 0) {
+      fallos.push("🔴 Un visitante anónimo PUEDE escribir en <strong>" + abiertos.join(" y ") + "</strong>: puede agregar o borrar productos desde su navegador.");
+    }
+    if (intruso === true) {
+      fallos.push("🔴 Cualquier cuenta registrada (una inventada, sin tu permiso) PUEDE escribir tu catálogo. Tus reglas piden \"estar logueado\" en vez de exigir <strong>tu correo</strong>.");
+    }
+    if (ilegibles.length > 0) {
+      fallos.push("🟠 Tus clientes NO pueden leer <strong>" + ilegibles.join(" y ") + "</strong> desde la nube: la web funciona con datos de reserva y tus cambios en esos datos no se ven.");
+    }
+
+    pintarResultadoSeguridad("#f87171", "rgba(239,68,68,0.15)",
+      fallos.join("<br>") +
+      "<br><br><strong>Solución (2 min):</strong> Firebase Console → Firestore Database → pestaña <strong>Reglas</strong> → borra TODO lo que haya → pega el contenido completo del archivo <em>firestore.rules</em> → <strong>Publicar</strong>. " +
+      "Después vuelve aquí y pulsa este botón otra vez hasta ver 🟢. " +
+      (intrusoNota ? "<em>" + intrusoNota + "</em>" : ""));
   } catch (err) {
     console.warn("[RBstore Seguridad] No se pudo completar la comprobación:", err);
     pintarResultadoSeguridad("#facc15", "rgba(250,204,21,0.12)",
