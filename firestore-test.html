@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head><title>RBstore Firestore Test</title></head>
+<body style="background:#111;color:#fff;font-family:monospace;padding:20px;">
+<h2>🔥 Diagnóstico Firestore RBstore</h2>
+<div id="log" style="white-space:pre-wrap;line-height:1.8;"></div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+const log = (msg) => { document.getElementById('log').innerHTML += msg + '\n'; };
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBKSEXRCDMcgDP6gi2WXoe2e6jFNqV0aFE",
+  authDomain: "rbstore-a959f.firebaseapp.com",
+  projectId: "rbstore-a959f",
+  storageBucket: "rbstore-a959f.firebasestorage.app",
+  messagingSenderId: "850130649157",
+  appId: "1:850130649157:web:0027c82bea42cccfb7232c",
+};
+
+try {
+  log('1️⃣ Inicializando Firebase...');
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  log('✅ Firebase inicializado correctamente');
+
+  log('\n2️⃣ Leyendo colección "productos"...');
+  try {
+    const prodSnap = await getDocs(collection(db, "productos"));
+    log(`✅ Productos encontrados: ${prodSnap.size}`);
+    prodSnap.forEach(doc => {
+      const d = doc.data();
+      log(`   📦 ${doc.id} → ${d.nombre || d.name || '(sin nombre)'} | $${d.precio || d.price || 0}`);
+    });
+    if (prodSnap.size === 0) {
+      log('⚠️ La colección "productos" está VACÍA. No hay productos en Firestore.');
+      log('   👉 El dueño debe agregar productos desde el Panel Admin.');
+    }
+  } catch(e) {
+    log(`❌ ERROR leyendo productos: ${e.message}`);
+    log('   👉 Las REGLAS DE FIRESTORE están bloqueando la lectura.');
+  }
+
+  log('\n3️⃣ Leyendo colección "categorias"...');
+  try {
+    const catSnap = await getDocs(collection(db, "categorias"));
+    log(`✅ Categorías encontradas: ${catSnap.size}`);
+    catSnap.forEach(doc => {
+      const d = doc.data();
+      log(`   🏷️ ${doc.id} → ${d.name || d.nombre || '(sin nombre)'} ${d.icon || ''}`);
+    });
+    if (catSnap.size === 0) {
+      log('⚠️ La colección "categorias" está VACÍA.');
+    }
+  } catch(e) {
+    log(`❌ ERROR leyendo categorías: ${e.message}`);
+  }
+
+  log('\n✅ Diagnóstico completado.');
+} catch(e) {
+  log(`❌ ERROR FATAL: ${e.message}`);
+}
+</script>
+</body>
+</html>
