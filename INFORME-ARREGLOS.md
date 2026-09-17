@@ -37,11 +37,44 @@ Reproduje el flujo completo en un navegador real y estas son las causas, comprob
 
 *El producto de prueba usado se eliminó de Firestore al terminar.*
 
-## Pendiente para que se vea en la web
+## Estado de publicación
 
-Los cambios están en `_rbstore_src/` (copia local del repo `rbstore-catalog`). Hay que **subirlos** (commit + push a `main`) para que GitHub Pages / TraccionWeb los sirva.
+✅ **Publicado.** Los cambios están en `main` del repo `rbstore-catalog` (commit `170d44c`, luego `f14c28b`) y la web real los sirve: `https://rbstore.traccionweb.com` entrega `app.js?v=68.0` con el login por correo y el botón de seguridad. (El dominio de GitHub Pages redirige a TraccionWeb, así que hay un solo sitio en vivo.)
 
-Además sigue pendiente de decisiones tuyas:
+## Segunda tanda de arreglos (17/09/2026)
 
-- Las reglas de Firestore **continúan abiertas** (cualquiera puede escribir el catálogo). El archivo listo está en `firestore.rules`.
-- Quedan datos ajenos en la nube: categoría **🎽 Franelas deportivas** y 2 productos **"Franela Nike talla L"**, además de 2 documentos de 529 KB con fotos sin optimizar.
+### Bug corregido: producto invisible al recrearlo con un nombre ya borrado
+
+El historial de borrados (`rbstore_deleted_product_ids`) guardaba **también el nombre**, y el merge contra Firestore excluye cualquier producto cuyo id **o nombre** esté en esa lista. Consecuencia: si borrabas un producto y luego creabas otro con el **mismo nombre**, se publicaba en la nube pero **nunca aparecía** en tu panel ni en la web (y cada recarga seguía ocultándolo).
+
+- Nuevo: `removeDeletedProductRecord()` / `removeDeletedCategoryRecord()`.
+- Al guardar un producto se limpian su id y su nombre de la lista de borrados, y se descarta su borrado pendiente.
+- Mismo arreglo aplicado al crear categorías.
+- Probado: con `"zz smoke test (borrar)"` ya en la lista de borrados, se creó de nuevo ese producto → aparece en el panel (11 filas), se publica en la nube y la marca desaparece, conservando las demás entradas.
+
+### Nuevo: botón 🛡️ «Comprobar seguridad» en el panel
+
+Hace una **sonda inofensiva**: intenta borrar un documento inexistente en `productos` y `categorias` desde una instancia de Firebase **sin sesión** (lo que puede hacer un visitante). No crea ni destruye nada real.
+
+- 🔴 «TU CATÁLOGO ESTÁ ABIERTO (productos y categorías)» → faltan publicar las reglas.
+- 🟢 «Protegido» → listo, nadie sin tu sesión puede escribir.
+
+Comprobado hoy: responde 🔴 con las reglas actuales (abren solo `productos` y `categorias`; el resto de colecciones ya están cerradas).
+
+### Verificaciones hechas en la nube real
+
+- ✅ `Rrodriguezcesar00@gmail.com` inicia sesión y el token trae ese correo exacto → la regla estricta pasará.
+- ✅ Login del panel + banda verde «✅ Conectado a la nube».
+- ✅ Agregar producto con foto → publicado en 3,3 s (documento de 14 KB).
+- ✅ Borrar desde el panel → eliminado también de la nube.
+- ✅ Cerrar sesión de la nube deja `currentUser` en null.
+- ⚠️ **El registro público está ABIERTO**: se pudo crear una cuenta cualquiera solo con la API key (se eliminó en el momento). Por eso las reglas quedaron **amarradas a tu correo**, no solo a «estar logueado».
+- ✅ La nube quedó limpia: **3 productos tuyos**, 0 categorías, sin residuos de prueba.
+- ⚠️ Publicar reglas por API devuelve **401** (Google exige OAuth de consola): es el único paso que solo puedes hacer tú.
+
+## ÚNICO paso manual pendiente: publicar las reglas
+
+1. **Firebase Console → Firestore Database → pestaña «Reglas»**: borra todo, pega el contenido de `firestore.rules` y pulsa **Publicar**.
+2. **Panel Dueño → 🛡️ Comprobar seguridad**: debe responder **🟢 Protegido**.
+3. Opcional: **Authentication → Settings → User actions** → desactiva **«Enable create (sign-up)»** para que nadie pueda registrarse en tu proyecto.
+4. Si algún día cambias de cuenta de dueño, actualiza el correo dentro de `firestore.rules` en la función `esDueno()`.
