@@ -9,7 +9,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="style.css?v=66.0">
+  <link rel="stylesheet" href="style.css?v=67.0">
 </head>
 <body>
 
@@ -288,19 +288,25 @@
       <!-- Login View -->
       <div id="adminLoginView">
         <h2 class="modal-title" style="margin-bottom: 20px;">Panel Admin RBstore</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 24px;">Ingresa la contraseña del administrador</p>
-        <input type="password" id="adminPassInput" placeholder="Contraseña" class="admin-input" onkeydown="if(event.key==='Enter') submitAdminLogin()">
+        <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 0.88rem; line-height: 1.5;">
+          Entra con tu <strong>correo y contraseña</strong> para publicar los cambios en la nube (todos los clientes los ven al instante).<br>
+          Si solo escribes la <strong>clave del panel</strong>, trabajarás en <strong>modo local</strong>: los productos se guardan en este dispositivo y quedan pendientes hasta que publiques.
+        </p>
+        <input type="email" id="adminEmailInput" placeholder="Correo del dueño" class="admin-input" autocomplete="username">
+        <input type="password" id="adminPassInput" placeholder="Contraseña" class="admin-input" autocomplete="current-password" onkeydown="if(event.key==='Enter') submitAdminLogin()">
         <p id="adminLoginError" class="admin-error" style="display: none;">Contraseña incorrecta</p>
         <button onclick="submitAdminLogin()" class="btn btn--primary" style="width: 100%; margin-top: 16px;">Ingresar</button>
       </div>
 
       <!-- Dashboard View -->
       <div id="adminDashboardView" style="display: none;">
-        <h2 class="modal-title" style="margin-bottom: 20px;">Gestión del Catálogo</h2>
+        <h2 class="modal-title" style="margin-bottom: 14px;">Gestión del Catálogo</h2>
+        <div id="adminCloudStatus" style="display: none;"></div>
         <div class="admin-toolbar" style="gap: 10px; flex-wrap: wrap;">
           <button id="btnShowAddProduct" class="btn btn--primary">+ Agregar Producto</button>
           <button id="btnToggleCategoryForm" class="btn btn--secondary" style="background: rgba(61, 139, 253, 0.15); color: var(--accent-bright); border: 1px solid var(--border-accent);">+ Nueva Categoría</button>
           <button id="btnResetDefaultCatalog" class="btn btn--outline" style="color: #ef4444; border-color: rgba(239,68,68,0.3);">Restablecer</button>
+          <button id="btnSyncPending" class="btn btn--secondary" style="display: none; background: rgba(250, 204, 21, 0.15); color: #facc15; border: 1px solid rgba(250, 204, 21, 0.35);">⏳ Sincronizar pendientes (0)</button>
         </div>
 
         <!-- Add Category Form (hidden by default) -->
@@ -383,6 +389,6 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
   </button>
 
-  <script type="module" src="app.js?v=66.0"></script>
+  <script type="module" src="app.js?v=67.0"></script>
 </body>
 </html>

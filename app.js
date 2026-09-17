@@ -130,6 +130,7 @@ let currentSearchTerm = "";
 let selectedProduct = null;
 let selectedQuantity = 1;
 let isAdminLoggedIn = false;
+let cloudUser = null; // usuario de Firebase Auth (necesario para publicar en la nube)
 let firestoreProductsLoaded = false;
 let firestoreCategoriesLoaded = false;
 
@@ -172,6 +173,166 @@ function addDeletedCategoryId(id, name) {
   } catch(e) {}
 }
 
+// ═══════════════════════════════════════════════
+// COLA DE PENDIENTES — ningún cambio se pierde si la nube falla
+// ═══════════════════════════════════════════════
+const PENDING_PRODUCTS_KEY = "rbstore_pending_products";
+const PENDING_DELETES_KEY = "rbstore_pending_deletes";
+
+function readJSONArray(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch(e) { return []; }
+}
+
+function writeJSONArray(key, arr) {
+  try { localStorage.setItem(key, JSON.stringify(arr)); } catch(e) {}
+}
+
+function getPendingProductIds() {
+  return readJSONArray(PENDING_PRODUCTS_KEY).map(String);
+}
+
+function markProductPendingSync(id) {
+  if (!id) return;
+  const list = getPendingProductIds();
+  if (!list.includes(String(id))) {
+    list.push(String(id));
+    writeJSONArray(PENDING_PRODUCTS_KEY, list);
+  }
+  updatePendingSyncUI();
+}
+
+function clearProductPendingSync(id) {
+  writeJSONArray(PENDING_PRODUCTS_KEY, getPendingProductIds().filter(x => x !== String(id)));
+  updatePendingSyncUI();
+}
+
+function getPendingDeletes() {
+  return readJSONArray(PENDING_DELETES_KEY).filter(x => x && x.id);
+}
+
+function markProductPendingDelete(id, name) {
+  if (!id) return;
+  const list = getPendingDeletes();
+  if (!list.some(x => String(x.id) === String(id))) {
+    list.push({ id: String(id), name: name || "" });
+    writeJSONArray(PENDING_DELETES_KEY, list);
+  }
+  updatePendingSyncUI();
+}
+
+function clearProductPendingDelete(id) {
+  writeJSONArray(PENDING_DELETES_KEY, getPendingDeletes().filter(x => String(x.id) !== String(id)));
+  updatePendingSyncUI();
+}
+
+function pendingChangesCount() {
+  return getPendingProductIds().length + getPendingDeletes().length;
+}
+
+function updatePendingSyncUI() {
+  const btn = document.getElementById("btnSyncPending");
+  const count = pendingChangesCount();
+  if (btn) {
+    btn.style.display = count > 0 ? "inline-flex" : "none";
+    btn.textContent = `⏳ Sincronizar pendientes (${count})`;
+  }
+  try { renderAdminProductsTable(); } catch(e) {}
+}
+
+// Convierte un producto local al formato del documento de Firestore
+function productToFirestoreDoc(prod) {
+  const old = (prod.oldPrice === null || prod.oldPrice === undefined || prod.oldPrice === "")
+    ? null
+    : Number(prod.oldPrice);
+
+  return {
+    nombre: prod.name,
+    categoria: prod.sector,
+    precio: Number(prod.price) || 0,
+    precioAnterior: old,
+    badge: prod.badge || "",
+    imagenUrl: prod.image,
+    descripcion: prod.description || "",
+    disponible: true
+  };
+}
+
+async function syncProductToCloud(prod) {
+  const fb = await initFirebaseSDK();
+  if (!fb) throw new Error("Firebase no disponible");
+
+  const { db, firestore } = fb;
+  const { setDoc, doc, serverTimestamp } = firestore;
+  const payload = productToFirestoreDoc(prod);
+  payload.actualizadoEn = serverTimestamp();
+
+  await setDoc(doc(db, "productos", String(prod.id)), payload, { merge: true });
+}
+
+async function deleteProductFromCloud(id) {
+  const fb = await initFirebaseSDK();
+  if (!fb) throw new Error("Firebase no disponible");
+
+  const { db, firestore } = fb;
+  await firestore.deleteDoc(firestore.doc(db, "productos", String(id)));
+}
+
+// Reintenta todo lo que quedó pendiente (botón del panel, al recuperar internet o al abrir la web)
+async function syncPendingProducts(notify = true) {
+  const pendingIds = getPendingProductIds();
+  const pendingDeletes = getPendingDeletes();
+
+  if (!pendingIds.length && !pendingDeletes.length) {
+    if (notify) showToast("✅ Todo está sincronizado con la nube");
+    updatePendingSyncUI();
+    return;
+  }
+
+  let ok = 0;
+  let fail = 0;
+
+  for (const rec of pendingDeletes) {
+    try {
+      await deleteProductFromCloud(rec.id);
+      clearProductPendingDelete(rec.id);
+      ok++;
+    } catch(e) {
+      console.warn("[RBstore Sync] No se pudo borrar", rec.id, e.message);
+      fail++;
+    }
+  }
+
+  for (const id of pendingIds) {
+    const prod = products.find(p => String(p.id) === String(id));
+    if (!prod) {
+      clearProductPendingSync(id);
+      continue;
+    }
+    try {
+      await syncProductToCloud(prod);
+      clearProductPendingSync(id);
+      ok++;
+    } catch(e) {
+      console.warn("[RBstore Sync] No se pudo publicar", id, e.message);
+      fail++;
+    }
+  }
+
+  updatePendingSyncUI();
+
+  if (notify) {
+    showToast(fail
+      ? `⚠️ ${ok} cambio(s) publicados y ${fail} siguen fallando. Revisa la conexión.`
+      : `🔥 ${ok} cambio(s) publicados para todos los clientes`);
+  }
+}
+
+window.syncPendingProducts = syncPendingProducts;
+
 // SAFE DOM READY / IMMEDIATE EXECUTION
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initApp);
@@ -194,6 +355,7 @@ function initApp() {
   setupEventListeners();
   setupScrollEffects();
   updateStats();
+  updatePendingSyncUI();
 
   // 3. Start Firebase Firestore Realtime Sync — THIS is the real data source
   initFirebaseSync();
@@ -239,18 +401,30 @@ async function initFirebaseSync() {
           });
         });
 
-        // Merge DEFAULT_PRODUCTS with firestoreProducts, excluding deleted items
+        // Merge: base local del dueño + DEFAULT_PRODUCTS + Firestore, excluyendo borrados
+        // (ANTES: se reconstruía solo desde DEFAULTS y los productos agregados que no
+        //  alcanzaron a sincronizarse con la nube DESAPARECIAN con cada snapshot)
         const deletedProds = getDeletedProductIds();
         const productMap = new Map();
 
+        // 1) Base: lo que ya está en memoria (conserva agregados/ediciones locales del dueño)
+        products.forEach(p => {
+          const pId = String(p.id);
+          const pNameLower = safeStr(p.name);
+          if (deletedProds.includes(pId) || deletedProds.includes(pNameLower)) return;
+          productMap.set(pId, p);
+        });
+
+        // 2) Defaults de respaldo para visitantes nuevos (si no existe ya por id o nombre)
         DEFAULT_PRODUCTS.forEach(p => {
           const pId = String(p.id);
           const pNameLower = safeStr(p.name);
-          if (!deletedProds.includes(pId) && !deletedProds.includes(pNameLower)) {
-            productMap.set(pId, p);
-          }
+          if (deletedProds.includes(pId) || deletedProds.includes(pNameLower)) return;
+          const exists = productMap.has(pId) || Array.from(productMap.values()).some(x => safeStr(x.name) === pNameLower);
+          if (!exists) productMap.set(pId, p);
         });
 
+        // 3) Firestore manda: sobreescribe por id o nombre coincidente
         firestoreProducts.forEach(p => {
           const pId = String(p.id);
           const pNameLower = safeStr(p.name);
@@ -348,17 +522,25 @@ async function initFirebaseSync() {
     });
 
     authMod.onAuthStateChanged(auth, (user) => {
+      cloudUser = user || null;
       if (user) {
-        console.log("[RBstore Auth] Autenticado como dueño en Firebase:", user.email);
+        console.log("[RBstore Auth] Sesión de la nube activa:", user.email);
         isAdminLoggedIn = true;
-        const adminDash = document.getElementById("adminDashboardView");
-        const adminLogin = document.getElementById("adminLoginView");
-        if (adminDash && adminLogin) {
-          adminLogin.style.display = "none";
-          adminDash.style.display = "block";
+        const overlay = document.getElementById("adminOverlay");
+        if (overlay && overlay.classList.contains("active")) {
+          openAdminPanel(true);
         }
       }
     });
+
+    // Reintenta automáticamente lo que no alcanzó a publicarse en la nube
+    window.addEventListener("online", () => {
+      if (pendingChangesCount() > 0) syncPendingProducts(false);
+    });
+
+    setTimeout(() => {
+      if (pendingChangesCount() > 0) syncPendingProducts(false);
+    }, 2000);
 
   } catch(e) {
     console.error("[RBstore Firebase] Error en inicialización de sync:", e);
@@ -490,11 +672,15 @@ function handleCategoryClick(sectorId, cardElement) {
 }
 
 // DYNAMIC SECTOR SELECTOR FOR ADD/EDIT FORM
-function renderSectorOptions() {
+function renderSectorOptions(selectedValue) {
   const select = document.getElementById("prodSector");
   if (!select) return;
 
   const currentVal = select.value;
+  const wanted = (selectedValue !== undefined && selectedValue !== null && selectedValue !== "")
+    ? String(selectedValue)
+    : (currentVal ? String(currentVal) : "");
+
   select.innerHTML = "";
 
   categories.forEach(cat => {
@@ -504,9 +690,16 @@ function renderSectorOptions() {
     select.appendChild(option);
   });
 
-  if (currentVal && categories.some(c => c.id === currentVal)) {
-    select.value = currentVal;
+  // Si la categoría del producto no está en la lista (p. ej. quedó desincronizada),
+  // se agrega la opción para NO cambiarla en silencio al guardar.
+  if (wanted && !categories.some(c => String(c.id) === wanted)) {
+    const opt = document.createElement("option");
+    opt.value = wanted;
+    opt.textContent = `⚠️ ${wanted} (categoría desconocida)`;
+    select.appendChild(opt);
   }
+
+  if (wanted) select.value = wanted;
 }
 
 // ═══════════════════════════════════════════════
@@ -742,6 +935,7 @@ function setupEventListeners() {
   document.getElementById("btnResetDefaultCatalog")?.addEventListener("click", resetDefaultCatalog);
   document.getElementById("btnToggleCategoryForm")?.addEventListener("click", toggleAddCategoryForm);
   document.getElementById("categoryForm")?.addEventListener("submit", handleCategoryFormSubmit);
+  document.getElementById("btnSyncPending")?.addEventListener("click", () => syncPendingProducts(true));
 }
 
 // ═══════════════════════════════════════════════
@@ -874,15 +1068,82 @@ function triggerAdminModal() {
   document.body.style.overflow = "hidden";
 
   if (isAdminLoggedIn) {
-    document.getElementById("adminLoginView").style.display = "none";
-    document.getElementById("adminDashboardView").style.display = "block";
-    renderAdminProductsTable();
+    openAdminPanel(!!cloudUser);
   } else {
     document.getElementById("adminLoginView").style.display = "block";
     document.getElementById("adminDashboardView").style.display = "none";
     document.getElementById("adminPassInput").value = "";
+    const emailEl = document.getElementById("adminEmailInput");
+    if (emailEl && cloudUser) emailEl.value = cloudUser.email || "";
     document.getElementById("adminLoginError").style.display = "none";
   }
+}
+
+// Muestra el panel y avisa claramente si los cambios se publican o no
+function openAdminPanel(onCloud) {
+  isAdminLoggedIn = true;
+
+  const loginView = document.getElementById("adminLoginView");
+  const dashView = document.getElementById("adminDashboardView");
+  if (loginView) loginView.style.display = "none";
+  if (dashView) dashView.style.display = "block";
+
+  renderAdminProductsTable();
+  renderAdminCategoriesList();
+  updatePendingSyncUI();
+  updateCloudModeBanner(onCloud);
+}
+
+function updateCloudModeBanner(onCloud) {
+  const banner = document.getElementById("adminCloudStatus");
+  if (!banner) return;
+
+  banner.style.display = "block";
+  banner.style.padding = "12px 14px";
+  banner.style.borderRadius = "10px";
+  banner.style.fontSize = "0.85rem";
+  banner.style.lineHeight = "1.45";
+  banner.style.marginBottom = "16px";
+
+  if (onCloud) {
+    const who = cloudUser && cloudUser.email ? ` (${cloudUser.email})` : "";
+    banner.style.background = "rgba(74, 222, 128, 0.12)";
+    banner.style.border = "1px solid rgba(74, 222, 128, 0.35)";
+    banner.style.color = "#4ade80";
+    banner.innerHTML = `✅ <strong>Conectado a la nube${who}</strong> — cada cambio se publica para todos tus clientes.<br><button onclick="cloudLogout()" style="margin-top:8px; background:none; border:1px solid rgba(74,222,128,0.4); color:#4ade80; border-radius:8px; padding:5px 10px; cursor:pointer; font-size:0.78rem;">Cerrar sesión de la nube</button>`;
+  } else {
+    banner.style.background = "rgba(250, 204, 21, 0.12)";
+    banner.style.border = "1px solid rgba(250, 204, 21, 0.35)";
+    banner.style.color = "#facc15";
+    banner.innerHTML = `⚠️ <strong>Modo local (sin publicar)</strong> — los cambios quedan marcados como <em>⏳ sin publicar</em> en este dispositivo.<br>Para publicarlos, pulsa <strong>Cerrar sesión</strong>, vuelve a entrar con tu <strong>correo y contraseña</strong> y pulsa <strong>Sincronizar pendientes</strong>.`;
+  }
+}
+
+async function cloudLogout() {
+  try {
+    const fb = await initFirebaseSDK();
+    if (fb && fb.authMod && fb.auth) await fb.authMod.signOut(fb.auth);
+  } catch(e) {
+    console.warn("No se pudo cerrar la sesión de la nube:", e.message);
+  }
+  cloudUser = null;
+  isAdminLoggedIn = false;
+  closeAdminModal();
+  showToast("Sesión de la nube cerrada");
+}
+
+window.cloudLogout = cloudLogout;
+
+function authErrorMessage(err) {
+  const code = String((err && err.code) || "") + " " + String((err && err.message) || "");
+  if (code.includes("invalid-credential") || code.includes("wrong-password") || code.includes("user-not-found")) {
+    return "Correo o contraseña incorrectos";
+  }
+  if (code.includes("invalid-email")) return "El correo no tiene un formato válido";
+  if (code.includes("too-many-requests")) return "Demasiados intentos fallidos. Espera unos minutos.";
+  if (code.includes("network")) return "Sin conexión con Firebase";
+  if (code.includes("operation-not-allowed")) return "Falta activar Email/contraseña en Authentication de Firebase";
+  return (err && err.message) ? err.message : "No se pudo iniciar sesión";
 }
 
 function closeAdminModal() {
@@ -893,19 +1154,52 @@ function closeAdminModal() {
   }
 }
 
-function submitAdminLogin() {
-  const passInput = document.getElementById("adminPassInput").value.trim();
+async function submitAdminLogin() {
+  const emailEl = document.getElementById("adminEmailInput");
+  const passEl = document.getElementById("adminPassInput");
   const errorEl = document.getElementById("adminLoginError");
+  const btn = document.querySelector('#adminLoginView button');
 
-  if (passInput === RBSTORE_CONFIG.adminKey) {
-    isAdminLoggedIn = true;
-    errorEl.style.display = "none";
-    document.getElementById("adminLoginView").style.display = "none";
-    document.getElementById("adminDashboardView").style.display = "block";
-    renderAdminProductsTable();
-    showToast("¡Bienvenido al Panel Admin de RBstore!");
-  } else {
-    errorEl.style.display = "block";
+  const email = emailEl ? emailEl.value.trim() : "";
+  const pass = passEl ? passEl.value.trim() : "";
+
+  if (errorEl) errorEl.style.display = "none";
+  if (btn) { btn.disabled = true; btn.textContent = "Entrando..."; }
+
+  try {
+    // 1. Sesión real en Firebase: es la única forma de PUBLICAR (guardar en la nube).
+    if (email) {
+      const fb = await initFirebaseSDK();
+      if (!fb) throw new Error("Sin conexión con Firebase");
+
+      const { auth, authMod } = fb;
+      const cred = await authMod.signInWithEmailAndPassword(auth, email, pass);
+      cloudUser = cred.user;
+      openAdminPanel(true);
+      showToast("🔥 Sesión iniciada: tus cambios se publican para todos");
+      return;
+    }
+
+    // 2. Clave local del dueño: sirve para preparar productos sin internet,
+    //    pero NO los publica (quedan como pendientes).
+    if (pass === RBSTORE_CONFIG.adminKey) {
+      openAdminPanel(false);
+      showToast("⚠️ Modo local: entra con tu correo para publicar en la nube", 6000);
+      return;
+    }
+
+    if (errorEl) {
+      errorEl.style.display = "block";
+      errorEl.textContent = "Contraseña incorrecta";
+    }
+  } catch(err) {
+    console.warn("[RBstore Auth] No se pudo iniciar sesión:", err);
+    if (errorEl) {
+      errorEl.style.display = "block";
+      errorEl.textContent = authErrorMessage(err);
+    }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "Ingresar"; }
   }
 }
 
@@ -915,11 +1209,14 @@ function renderAdminProductsTable() {
 
   tbody.innerHTML = "";
 
+  const pendingIds = getPendingProductIds();
+
   products.forEach(p => {
+    const isPending = pendingIds.includes(String(p.id));
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td><img src="${p.image}" alt="${p.name}" class="admin-table-img"></td>
-      <td><strong>${p.name}</strong></td>
+      <td><strong>${p.name}</strong>${isPending ? ' <span title="Aún no visible para tus clientes" style="color:#facc15; font-size:0.7rem; white-space:nowrap;">⏳ sin publicar</span>' : ''}</td>
       <td><span class="sector-pill">${getSectorLabel(p.sector)}</span></td>
       <td>$${Number(p.price).toFixed(2)}</td>
       <td>
@@ -956,6 +1253,7 @@ function editProduct(productId) {
   document.getElementById("formTitle").innerText = `Editar Producto: ${p.name}`;
   document.getElementById("editProductId").value = p.id;
   document.getElementById("prodName").value = p.name;
+  renderSectorOptions(p.sector);
   document.getElementById("prodSector").value = p.sector;
   document.getElementById("prodPrice").value = p.price;
   document.getElementById("prodOldPrice").value = p.oldPrice || "";
@@ -971,7 +1269,119 @@ function editProduct(productId) {
 
 window.editProduct = editProduct;
 
-const IMGBB_API_KEY = "40941cfd13eaee31c9fa00c3b9dd2d52";
+// CLAVE DE IMGBB: la que viene por defecto YA NO ES VÁLIDA (ImgBB responde "Invalid API v1 key").
+// Si quieres fotos alojadas fuera de Firestore, crea una clave gratis en https://api.imgbb.com
+// y guárdala desde la consola del navegador con:
+//   localStorage.setItem("rbstore_imgbb_key", "TU_CLAVE")
+const IMGBB_API_KEY_DEFAULT = "40941cfd13eaee31c9fa00c3b9dd2d52";
+
+function getImgBBKey() {
+  try {
+    const custom = localStorage.getItem("rbstore_imgbb_key");
+    if (custom && custom.trim()) return custom.trim();
+  } catch(e) {}
+  return IMGBB_API_KEY_DEFAULT;
+}
+
+// Si la clave falla, no se vuelve a intentar en toda la sesión (evita esperas inútiles)
+let imgBBKeyFailed = false;
+
+// ═══════════════════════════════════════════════
+// PRESUPUESTO DE IMAGEN — Firestore rechaza documentos de más de 1 MB
+// ═══════════════════════════════════════════════
+const FIRESTORE_IMG_TARGET_CHARS = 260000; // ~190 KB: rápido de cargar y siempre cabe
+const FIRESTORE_IMG_HARD_CHARS = 800000;   // techo de seguridad antes del límite de 1 MB
+
+// Re-codifica una imagen (data URL) al tamaño y calidad indicados, siempre en JPEG (pesa mucho menos que PNG)
+function reencodeDataUrl(dataUrl, maxSide, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+
+      if (width > maxSide || height > maxSide) {
+        if (width > height) {
+          height = Math.round((height * maxSide) / width);
+          width = maxSide;
+        } else {
+          width = Math.round((width * maxSide) / height);
+          height = maxSide;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#0c0d14";
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => reject(new Error("No se pudo reprocesar la imagen"));
+    img.src = dataUrl;
+  });
+}
+
+// Reduce la imagen por pasos hasta que quepa en el presupuesto (esto es lo que faltaba:
+// antes una foto de celular quedaba en base64 gigante y Firestore rechazaba el guardado)
+async function fitImageToBudget(dataUrl, targetChars = FIRESTORE_IMG_TARGET_CHARS) {
+  if (!dataUrl || !String(dataUrl).startsWith("data:image/")) return dataUrl;
+  if (dataUrl.length <= targetChars) return dataUrl;
+
+  const pasos = [[900, 0.72], [760, 0.65], [620, 0.58], [500, 0.5], [400, 0.45], [320, 0.4]];
+  let best = dataUrl;
+
+  for (const [lado, calidad] of pasos) {
+    try {
+      const next = await reencodeDataUrl(dataUrl, lado, calidad);
+      if (next.length < best.length) best = next;
+      if (best.length <= targetChars) return best;
+    } catch(e) {
+      break;
+    }
+  }
+  return best;
+}
+
+// Red de seguridad final: si la imagen que se va a guardar es base64 y es enorme, se reduce antes del guardado
+async function ensureImageFitsFirestore(imageUrl) {
+  if (!imageUrl || !String(imageUrl).startsWith("data:image/")) return imageUrl;
+  if (imageUrl.length <= FIRESTORE_IMG_TARGET_CHARS) return imageUrl;
+  return await fitImageToBudget(imageUrl);
+}
+
+// CADENA DE FOTOS: ImgBB (si la clave sirve) → Firebase Storage → base64 comprimido a la medida de Firestore
+async function prepareProductImage(file) {
+  const { blob, dataUrl } = await compressImageFile(file, 1000, 1000, 0.8);
+
+  if (!imgBBKeyFailed) {
+    try {
+      const url = await uploadImageToImgBB(blob);
+      showToast("✅ Foto alojada en la nube (ImgBB)");
+      return url;
+    } catch(err) {
+      console.warn("[RBstore Foto] ImgBB no disponible:", err.message);
+    }
+  }
+
+  if (!storageUploadFailed) {
+    try {
+      const url = await uploadImageToFirebaseStorage(blob);
+      showToast("✅ Foto alojada en Firebase Storage");
+      return url;
+    } catch(err) {
+      storageUploadFailed = true;
+      console.warn("[RBstore Foto] Firebase Storage no disponible:", err.message);
+    }
+  }
+
+  // Respaldo garantizado: la foto viaja dentro del producto, ya optimizada para caber
+  const fitted = await fitImageToBudget(dataUrl);
+  showToast("✅ Foto optimizada y lista");
+  return fitted;
+}
 
 // CLIENT-SIDE IMAGE COMPRESSOR (Reduces 10MB camera photos to crisp ~50KB images, preserving PNG transparency)
 function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.8) {
@@ -1033,65 +1443,82 @@ async function uploadImageToImgBB(fileOrBlob) {
   const formData = new FormData();
   formData.append("image", fileOrBlob, "product_photo.jpg");
 
-  const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${getImgBBKey()}`, {
     method: "POST",
     body: formData
   });
 
-  const data = await res.json();
-  if (data.success && data.data && data.data.url) {
+  let data = null;
+  try { data = await res.json(); } catch(e) {}
+
+  if (data && data.success && data.data && data.data.url) {
     return data.data.url;
-  } else {
-    throw new Error(data.error ? data.error.message : "Error al subir imagen a ImgBB");
   }
+
+  const msg = (data && data.error && data.error.message) ? data.error.message : `ImgBB respondió ${res.status}`;
+  if (res.status === 400 || res.status === 401 || /invalid api|api v1 key/i.test(msg)) {
+    imgBBKeyFailed = true;
+    console.warn("[RBstore Foto] La clave de ImgBB no es válida. Se usará otra vía para las fotos.");
+  }
+  throw new Error(msg);
 }
+
+// Firebase Storage reintenta indefinidamente cuando el bucket no existe (deja la foto "cargando" para siempre),
+// por eso la subida tiene límite de tiempo y se desactiva tras el primer fallo de la sesión.
+const STORAGE_UPLOAD_TIMEOUT_MS = 5000;
+let storageUploadFailed = false;
 
 async function uploadImageToFirebaseStorage(fileOrBlob) {
   const fb = await initFirebaseSDK();
   if (!fb || !fb.storage || !fb.storageMod) throw new Error("Firebase Storage no inicializado");
   const { storage, storageMod } = fb;
-  const { ref, uploadBytes, getDownloadURL } = storageMod;
+  const { ref, uploadBytesResumable, getDownloadURL } = storageMod;
 
   const fileName = `productos/prod_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.jpg`;
   const storageRef = ref(storage, fileName);
-  await uploadBytes(storageRef, fileOrBlob);
-  const downloadUrl = await getDownloadURL(storageRef);
-  return downloadUrl;
+  const task = uploadBytesResumable(storageRef, fileOrBlob);
+
+  await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      try { task.cancel(); } catch(e) {}
+      reject(new Error("Firebase Storage no respondió a tiempo"));
+    }, STORAGE_UPLOAD_TIMEOUT_MS);
+
+    task.on(
+      "state_changed",
+      () => {},
+      (err) => { clearTimeout(timer); reject(err); },
+      () => { clearTimeout(timer); resolve(); }
+    );
+  });
+
+  return await getDownloadURL(storageRef);
+}
+
+// Evita procesar/ subir dos veces la misma foto (una al elegirla y otra al guardar)
+let lastProcessedImage = null;
+
+function fileKey(file) {
+  return `${file.name}|${file.size}|${file.lastModified}`;
 }
 
 async function handleImageFileUpload(input) {
   if (!input || !input.files || !input.files[0]) return;
   const rawFile = input.files[0];
+  const imgField = document.getElementById("prodImage");
 
   try {
-    showToast("⚡ Optimizando imagen para carga ultrarrápida...");
-    const { blob, dataUrl } = await compressImageFile(rawFile, 1000, 1000, 0.8);
+    showToast("⚡ Optimizando foto...");
+    const finalUrl = await prepareProductImage(rawFile);
+    if (imgField) imgField.value = finalUrl;
+    lastProcessedImage = { key: fileKey(rawFile), url: finalUrl };
 
-    showToast("📤 Subiendo imagen a la nube...");
-
-    // 1. Intento con ImgBB
-    try {
-      const url = await uploadImageToImgBB(blob);
-      document.getElementById("prodImage").value = url;
-      showToast("✅ Imagen alojada exitosamente en ImgBB");
-      return;
-    } catch (err1) {
-      console.warn("[ImgBB Falló] Intentando Firebase Storage...", err1);
+    if (finalUrl.startsWith("data:")) {
+      const kb = Math.max(1, Math.round(finalUrl.length / 1400));
+      showToast(`✅ Foto lista (${kb} KB). Ahora pulsa Guardar`);
+    } else {
+      showToast("✅ Foto subida. Ahora pulsa Guardar");
     }
-
-    // 2. Intento con Firebase Storage
-    try {
-      const url = await uploadImageToFirebaseStorage(blob);
-      document.getElementById("prodImage").value = url;
-      showToast("✅ Imagen alojada exitosamente en Firebase Storage");
-      return;
-    } catch (err2) {
-      console.warn("[Firebase Storage Falló] Usando imagen optimizada en base64...", err2);
-    }
-
-    // 3. Respaldo Local Base64 Ultra-Liviano (~50KB)
-    document.getElementById("prodImage").value = dataUrl;
-    showToast("✅ Imagen procesada localmente (~50KB)");
   } catch (err) {
     console.error("Error procesando imagen:", err);
     showToast("⚠️ Error procesando la imagen: " + err.message);
@@ -1102,30 +1529,59 @@ window.handleImageFileUpload = handleImageFileUpload;
 
 async function handleProductFormSubmit(e) {
   e.preventDefault();
+
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.dataset.originalText = submitBtn.textContent;
+    submitBtn.textContent = "Guardando...";
+  }
+
+  try {
+    await saveProductFromForm(e);
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = submitBtn.dataset.originalText || "Guardar";
+    }
+  }
+}
+
+async function saveProductFromForm(e) {
   const editId = document.getElementById("editProductId").value;
   const fileInput = document.getElementById("prodFileInput");
   const file = fileInput && fileInput.files ? fileInput.files[0] : null;
 
   let imageUrl = document.getElementById("prodImage").value.trim();
 
-  // Si el usuario seleccionó un nuevo archivo, SIEMPRE procesar y reemplazar la imagen anterior
+  // Si el usuario seleccionó un nuevo archivo, SIEMPRE se reemplaza la imagen anterior.
+  // Si esa misma foto ya se procesó al elegirla, se reutiliza (evita subirla dos veces).
   if (file) {
-    try {
-      showToast("⚡ Procesando nueva imagen...");
-      const { blob, dataUrl } = await compressImageFile(file, 1000, 1000, 0.8);
-      try {
-        imageUrl = await uploadImageToImgBB(blob);
-      } catch (errImg) {
-        try {
-          imageUrl = await uploadImageToFirebaseStorage(blob);
-        } catch (errFb) {
-          imageUrl = dataUrl;
-        }
-      }
+    const yaProcesada = lastProcessedImage
+      && lastProcessedImage.key === fileKey(file)
+      && lastProcessedImage.url;
+
+    if (yaProcesada) {
+      imageUrl = lastProcessedImage.url;
       document.getElementById("prodImage").value = imageUrl;
-    } catch(err) {
-      console.error("Error procesando imagen en submit:", err);
+    } else {
+      try {
+        showToast("⚡ Procesando nueva imagen...");
+        imageUrl = await prepareProductImage(file);
+        lastProcessedImage = { key: fileKey(file), url: imageUrl };
+        document.getElementById("prodImage").value = imageUrl;
+      } catch(err) {
+        console.error("Error procesando imagen en submit:", err);
+        showToast("⚠️ No se pudo procesar la foto (" + err.message + "). Se guardará el producto sin cambiarla.");
+      }
     }
+  }
+
+  // Red de seguridad: ninguna imagen puede superar el límite de 1 MB de Firestore
+  imageUrl = await ensureImageFitsFirestore(imageUrl);
+
+  if (imageUrl && imageUrl.length > FIRESTORE_IMG_HARD_CHARS) {
+    showToast("⚠️ La foto sigue siendo muy pesada; intenta con otra imagen");
   }
 
   const prodData = {
@@ -1152,14 +1608,15 @@ async function handleProductFormSubmit(e) {
     description: prodData.descripcion
   };
 
-  // 1. Update local memory IMMEDIATELY for zero-lag UI response
-  if (editId) {
-    const idx = products.findIndex(p => p.id === editId);
-    if (idx !== -1) {
-      products[idx] = newProdLocal;
-    } else {
-      products.unshift(newProdLocal);
-    }
+  // 1. Actualización local inmediata (cero espera para el dueño)
+  const idxById = editId ? products.findIndex(p => String(p.id) === String(editId)) : -1;
+  if (idxById !== -1) {
+    products[idxById] = newProdLocal;
+  } else if (editId) {
+    // El id pudo cambiar (producto venido de Firestore): intenta por nombre antes de duplicar
+    const idxByName = products.findIndex(p => safeStr(p.name) === safeStr(prodData.nombre));
+    if (idxByName !== -1) products[idxByName] = newProdLocal;
+    else products.unshift(newProdLocal);
   } else {
     products.unshift(newProdLocal);
   }
@@ -1170,19 +1627,15 @@ async function handleProductFormSubmit(e) {
   hideProductForm();
   updateStats();
 
-  // 2. Save / Update in Cloud Firestore with merge (works for ALL IDs: base & custom)
+  // 2. Publicación en Firestore + cola de pendientes si falla (nunca más un error silencioso)
   try {
-    const fb = await initFirebaseSDK();
-    if (fb) {
-      const { db, firestore } = fb;
-      const { setDoc, doc, serverTimestamp } = firestore;
-      prodData.creadoEn = serverTimestamp();
-
-      await setDoc(doc(db, "productos", targetId), prodData, { merge: true });
-      showToast("🔥 Producto guardado y actualizado en la nube");
-    }
+    await syncProductToCloud(newProdLocal);
+    clearProductPendingSync(targetId);
+    showToast(editId ? "🔥 Producto actualizado para todos" : "🔥 Producto publicado para todos");
   } catch(err) {
-    console.warn("Aviso: Producto guardado localmente.", err);
+    console.error("Error guardando en Firestore:", err);
+    markProductPendingSync(targetId);
+    showToast("⚠️ Guardado en este dispositivo, pero NO publicado: " + firebaseErrorMessage(err) + ". Pulsa 'Sincronizar pendientes'.", 6500);
   }
 }
 
@@ -1193,6 +1646,7 @@ async function deleteProduct(productId) {
   if (confirm(`¿Estás seguro de eliminar "${pName || 'este producto'}" del catálogo?`)) {
     // 1. Record as deleted so it NEVER gets re-merged by Firestore listener or page refresh
     addDeletedProductId(productId, pName);
+    clearProductPendingSync(productId);
 
     // 2. Immediate local state removal for ZERO LAG responsiveness
     products = products.filter(item => item.id !== productId);
@@ -1204,14 +1658,12 @@ async function deleteProduct(productId) {
 
     // 3. Delete from Cloud Firestore Database
     try {
-      const fb = await initFirebaseSDK();
-      if (fb && productId) {
-        const { db, firestore } = fb;
-        await firestore.deleteDoc(firestore.doc(db, "productos", productId));
-        showToast("🔥 Producto eliminado permanentemente");
-      }
+      await deleteProductFromCloud(productId);
+      showToast("🔥 Producto eliminado para todos");
     } catch(err) {
-      console.warn("Aviso: Producto eliminado localmente de la vista del usuario.", err);
+      console.error("Error eliminando de Firestore:", err);
+      markProductPendingDelete(productId, pName);
+      showToast("⚠️ Oculto aquí, pero falta borrarlo de la nube (" + firebaseErrorMessage(err) + "). Pulsa 'Sincronizar pendientes'.", 6500);
     }
   }
 }
@@ -1318,6 +1770,7 @@ async function handleCategoryFormSubmit(e) {
     }
   } catch(err) {
     console.error("Error guardando categoría en Firestore:", err);
+    showToast("⚠️ Categoría guardada solo en este dispositivo: " + firebaseErrorMessage(err));
   }
 
   renderCategoriesGrid();
@@ -1383,7 +1836,8 @@ async function deleteCategory(catId) {
         showToast(`🔥 Categoría "${cat.name}" eliminada permanentemente`);
       }
     } catch(err) {
-      console.warn("Aviso: Categoría eliminada localmente.", err);
+      console.error("Error eliminando categoría de Firestore:", err);
+      showToast("⚠️ Categoría ocultada localmente, pero NO eliminada de la nube: " + firebaseErrorMessage(err));
     }
   }
 }
@@ -1437,8 +1891,50 @@ function updateCategoryCounts() {
   });
 }
 
+// ═══════════════════════════════════════════════
+// AYUDAS: MENSAJES CLAROS DE ERRORES FIREBASE + LÍMITE DE TAMAÑO DE IMAGEN
+// ═══════════════════════════════════════════════
+function firebaseErrorMessage(err) {
+  const code = String((err && err.code) || "") + " " + String((err && err.message) || "");
+  if (code.includes("permission-denied") || code.includes("PERMISSION_DENIED")) {
+    return "permisos denegados: entra con tu correo y contraseña para publicar (modo local activo)";
+  }
+  if (code.includes("resource-exhausted") || code.includes("entity too large") || code.includes("exceeds maximum")) {
+    return "el documento es demasiado grande (la imagen pesa demasiado)";
+  }
+  if (code.includes("unavailable") || code.includes("network") || code.includes("Failed to fetch")) {
+    return "sin conexión con el servidor";
+  }
+  if (code.includes("unauthenticated")) {
+    return "sesión no autenticada";
+  }
+  return (err && err.message) ? err.message : "error desconocido";
+}
+
+// Firestore acepta documentos de máx 1MB: si la foto viaja como base64 y es enorme,
+// se re-comprime en pasos sucesivos hasta caber (o se deja la menor posible)
+const FIRESTORE_IMAGE_LIMIT_CHARS = 900000;
+
+async function shrinkOversizedImageDataUrl(imageUrl, sourceBlob) {
+  if (!imageUrl || !imageUrl.startsWith("data:image/") || imageUrl.length <= FIRESTORE_IMAGE_LIMIT_CHARS) {
+    return imageUrl;
+  }
+  let current = imageUrl;
+  const pasos = [[800, 0.7], [600, 0.6], [450, 0.5]];
+  for (const [maxSide, q] of pasos) {
+    try {
+      const { dataUrl } = await compressImageFile(sourceBlob, maxSide, maxSide, q);
+      current = dataUrl;
+      if (dataUrl.length <= FIRESTORE_IMAGE_LIMIT_CHARS) return current;
+    } catch (e) {
+      break;
+    }
+  }
+  return current;
+}
+
 // TOAST NOTIFICATIONS
-function showToast(message) {
+function showToast(message, duration = 3000) {
   const toast = document.getElementById("toastNotification");
   const msgEl = document.getElementById("toastMessage");
   if (!toast || !msgEl) return;
@@ -1446,9 +1942,10 @@ function showToast(message) {
   msgEl.innerText = message;
   toast.classList.add("show");
 
-  setTimeout(() => {
+  if (showToast._timer) clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => {
     toast.classList.remove("show");
-  }, 3000);
+  }, duration);
 }
 
 // GLOBAL WINDOW EXPORTS FOR INLINE ONCLICK HANDLERS
