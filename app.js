@@ -133,10 +133,12 @@ let isAdminLoggedIn = false;
 let firestoreProductsLoaded = false;
 let firestoreCategoriesLoaded = false;
 
-// DOM READY
-document.addEventListener("DOMContentLoaded", () => {
+// SAFE DOM READY / IMMEDIATE EXECUTION
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initApp);
+} else {
   initApp();
-});
+}
 
 function initApp() {
   // 1. Load defaults as IMMEDIATE placeholder while Firestore connects
