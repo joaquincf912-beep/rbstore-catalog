@@ -164,7 +164,7 @@ function initApp() {
 
 // FIREBASE REALTIME FIRESTORE LISTENER (Productos + Categorías)
 // This is THE SINGLE SOURCE OF TRUTH. All visitors (including the owner) 
-// see data from Firestore in real-time.
+// see data from Firestore in real-time merged with base catalog.
 function initFirebaseSync() {
   try {
     // 1. Productos Listener
@@ -176,7 +176,7 @@ function initFirebaseSync() {
         firestoreProducts.push({
           id: docSnap.id,
           name: data.nombre || data.name || "Producto",
-          sector: (data.categoria || data.sector || "varios").toLowerCase(),
+          sector: (data.categoria || data.sector || "varios").toLowerCase().trim(),
           price: Number(data.precio || data.price || 0),
           oldPrice: (data.precioAnterior || data.oldPrice) ? Number(data.precioAnterior || data.oldPrice) : null,
           badge: data.badge || "",
@@ -185,24 +185,30 @@ function initFirebaseSync() {
         });
       });
 
-      if (firestoreProducts.length > 0) {
-        products = firestoreProducts;
-        firestoreProductsLoaded = true;
-        console.log(`[RBstore Firebase] 🔥 ${products.length} productos sincronizados desde Firestore`);
-      } else {
-        // If Firestore is empty, use default catalog products so screen is NEVER blank
-        products = [...DEFAULT_PRODUCTS];
-        console.log("[RBstore Firebase] 📦 Colección 'productos' vacía. Mostrando catálogo por defecto.");
-      }
+      // ALWAYS merge DEFAULT_PRODUCTS with firestoreProducts so base catalog is never lost
+      const productMap = new Map();
+      DEFAULT_PRODUCTS.forEach(p => productMap.set(p.id, p));
+      firestoreProducts.forEach(p => {
+        const existingKey = Array.from(productMap.keys()).find(k => 
+          k === p.id || productMap.get(k).name.toLowerCase() === p.name.toLowerCase()
+        );
+        if (existingKey) {
+          productMap.set(existingKey, p);
+        } else {
+          productMap.set(p.id, p);
+        }
+      });
+      products = Array.from(productMap.values());
+      firestoreProductsLoaded = true;
 
       renderCategoriesGrid();
       renderSectorOptions();
       renderProductsGrid();
       renderAdminProductsTable();
       updateStats();
+      console.log(`[RBstore Firebase] 🔥 ${products.length} productos listos (${firestoreProducts.length} en Firestore)`);
     }, (err) => {
       console.warn("[RBstore Firebase] Error en listener de productos:", err.message);
-      // Fallback to default catalog on error
       products = [...DEFAULT_PRODUCTS];
       renderCategoriesGrid();
       renderSectorOptions();
@@ -227,20 +233,31 @@ function initFirebaseSync() {
       // ALWAYS merge DEFAULT_CATEGORIES with firestoreCategories (so defaults are NEVER wiped out)
       const categoryMap = new Map();
       DEFAULT_CATEGORIES.forEach(c => categoryMap.set(c.id, c));
-      firestoreCategories.forEach(c => categoryMap.set(c.id, c));
+      firestoreCategories.forEach(c => {
+        const existingKey = Array.from(categoryMap.keys()).find(k => 
+          k === c.id || categoryMap.get(k).name.toLowerCase() === c.name.toLowerCase()
+        );
+        if (existingKey) {
+          categoryMap.set(existingKey, c);
+        } else {
+          categoryMap.set(c.id, c);
+        }
+      });
       categories = Array.from(categoryMap.values());
       firestoreCategoriesLoaded = true;
 
       renderCategoriesGrid();
       renderSectorOptions();
       renderAdminCategoriesList();
-      console.log(`[RBstore Firebase] 🏠 ${categories.length} categorías sincronizadas desde Firestore`);
+      renderProductsGrid();
+      console.log(`[RBstore Firebase] 🏠 ${categories.length} categorías listas (${firestoreCategories.length} en Firestore)`);
     }, (cErr) => {
       console.warn("[RBstore Firebase] Error en listener de categorías:", cErr.message);
       categories = [...DEFAULT_CATEGORIES];
       renderCategoriesGrid();
       renderSectorOptions();
       renderAdminCategoriesList();
+      renderProductsGrid();
     });
 
   } catch(e) {
