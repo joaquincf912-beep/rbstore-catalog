@@ -910,13 +910,15 @@ function editProduct(productId) {
 
 const IMGBB_API_KEY = "40941cfd13eaee31c9fa00c3b9dd2d52";
 
-// CLIENT-SIDE IMAGE COMPRESSOR (Reduces 10MB camera photos to crisp ~50KB JPEGs)
-function compressImageFile(file, maxWidth = 900, maxHeight = 900, quality = 0.75) {
+// CLIENT-SIDE IMAGE COMPRESSOR (Reduces 10MB camera photos to crisp ~50KB images, preserving PNG transparency)
+function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.8) {
   return new Promise((resolve, reject) => {
     if (!file || !file.type.startsWith("image/")) {
       reject(new Error("El archivo no es una imagen válida"));
       return;
     }
+
+    const isPngOrWebp = file.type === "image/png" || file.type === "image/webp";
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -940,14 +942,21 @@ function compressImageFile(file, maxWidth = 900, maxHeight = 900, quality = 0.75
         canvas.height = height;
 
         const ctx = canvas.getContext("2d");
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, width, height);
+
+        if (!isPngOrWebp) {
+          ctx.fillStyle = "#0c0d14";
+          ctx.fillRect(0, 0, width, height);
+        } else {
+          ctx.clearRect(0, 0, width, height);
+        }
+
         ctx.drawImage(img, 0, 0, width, height);
 
-        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        const mimeType = isPngOrWebp ? "image/png" : "image/jpeg";
+        const dataUrl = canvas.toDataURL(mimeType, isPngOrWebp ? undefined : quality);
         canvas.toBlob((blob) => {
           resolve({ blob: blob || file, dataUrl });
-        }, "image/jpeg", quality);
+        }, mimeType, isPngOrWebp ? undefined : quality);
       };
       img.onerror = () => reject(new Error("No se pudo procesar el formato de la imagen"));
       img.src = e.target.result;

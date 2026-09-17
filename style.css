@@ -525,6 +525,7 @@ button { cursor: pointer; font: inherit; border: none; background: none; }
 .product-card__img img {
   width: 100%; height: 100%;
   object-fit: cover;
+  object-position: center;
   pointer-events: none;
   transition: transform .25s ease;
   will-change: transform;
