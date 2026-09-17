@@ -169,7 +169,7 @@ function initFirebaseSync() {
   try {
     // 1. Productos Listener
     const q = query(collection(db, "productos"));
-    onSnapshot(q, (snapshot) => {
+    onSnapshot(q, async (snapshot) => {
       const firestoreProducts = [];
       snapshot.forEach((docSnap) => {
         const data = docSnap.data();
@@ -194,9 +194,10 @@ function initFirebaseSync() {
         renderAdminProductsTable();
         updateStats();
         console.log(`[RBstore Firebase] 🔥 ${products.length} productos sincronizados en tiempo real desde Firestore`);
-      } else if (!firestoreProductsLoaded) {
-        // Firestore collection is empty — keep showing defaults
-        console.log("[RBstore Firebase] Colección 'productos' vacía en Firestore. Mostrando productos por defecto.");
+      } else if (snapshot.empty && !firestoreProductsLoaded) {
+        console.log("[RBstore Firebase] Colección 'productos' vacía en Firestore. Auto-sembrando productos por defecto...");
+        firestoreProductsLoaded = true;
+        await autoSeedProductsToFirestore();
       }
     }, (err) => {
       console.warn("[RBstore Firebase] Error en listener de productos:", err.message);
@@ -205,7 +206,7 @@ function initFirebaseSync() {
 
     // 2. Categorías Listener
     const catQuery = query(collection(db, "categorias"));
-    onSnapshot(catQuery, (catSnapshot) => {
+    onSnapshot(catQuery, async (catSnapshot) => {
       const firestoreCategories = [];
       catSnapshot.forEach((cSnap) => {
         const cData = cSnap.data();
@@ -216,15 +217,21 @@ function initFirebaseSync() {
         });
       });
 
-      if (firestoreCategories.length > 0) {
-        categories = firestoreCategories;
-        firestoreCategoriesLoaded = true;
-        renderCategoriesGrid();
-        renderSectorOptions();
-        renderAdminCategoriesList();
-        console.log(`[RBstore Firebase] 🏠 ${categories.length} categorías sincronizadas en tiempo real desde Firestore`);
-      } else if (!firestoreCategoriesLoaded) {
-        console.log("[RBstore Firebase] Colección 'categorias' vacía en Firestore. Mostrando categorías por defecto.");
+      // ALWAYS merge DEFAULT_CATEGORIES with firestoreCategories so defaults are never wiped out
+      const categoryMap = new Map();
+      DEFAULT_CATEGORIES.forEach(c => categoryMap.set(c.id, c));
+      firestoreCategories.forEach(c => categoryMap.set(c.id, c));
+      categories = Array.from(categoryMap.values());
+      firestoreCategoriesLoaded = true;
+
+      renderCategoriesGrid();
+      renderSectorOptions();
+      renderAdminCategoriesList();
+      console.log(`[RBstore Firebase] 🏠 ${categories.length} categorías sincronizadas en tiempo real desde Firestore`);
+
+      if (catSnapshot.empty) {
+        console.log("[RBstore Firebase] Colección 'categorias' vacía en Firestore. Auto-sembrando categorías por defecto...");
+        await autoSeedCategoriesToFirestore();
       }
     }, (cErr) => {
       console.warn("[RBstore Firebase] Error en listener de categorías:", cErr.message);
@@ -233,6 +240,44 @@ function initFirebaseSync() {
   } catch(e) {
     console.error("[RBstore Firebase] Error inicializando Firestore:", e);
   }
+}
+
+// AUTO-SEED HELPERS
+async function autoSeedCategoriesToFirestore() {
+  try {
+    for (const cat of DEFAULT_CATEGORIES) {
+      await setDoc(doc(db, "categorias", cat.id), {
+        name: cat.name,
+        icon: cat.icon,
+        creadoEn: serverTimestamp()
+      });
+    }
+    console.log("[RBstore Firebase] 🌱 Categorías iniciales sembradas en Firestore.");
+  } catch(e) {
+    console.warn("Error sembrando categorías iniciales:", e);
+  }
+}
+
+async function autoSeedProductsToFirestore() {
+  try {
+    for (const p of DEFAULT_PRODUCTS) {
+      await addDoc(collection(db, "productos"), {
+        nombre: p.name,
+        categoria: p.sector,
+        precio: p.price,
+        precioAnterior: p.oldPrice || null,
+        badge: p.badge || "",
+        imagenUrl: p.image,
+        descripcion: p.description || "",
+        disponible: true,
+        creadoEn: serverTimestamp()
+      });
+    }
+    console.log("[RBstore Firebase] 🌱 Productos iniciales sembrados en Firestore.");
+  } catch(e) {
+    console.warn("Error sembrando productos iniciales:", e);
+  }
+}
 
   onAuthStateChanged(auth, (user) => {
     if (user) {
